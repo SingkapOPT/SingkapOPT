@@ -3,6 +3,7 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
+import fs from 'fs';
 
 dotenv.config();
 
@@ -10,6 +11,38 @@ const app = express();
 const PORT = 3000;
 
 app.use(express.json({ limit: '10mb' }));
+
+// Persistent Visitor Counter
+let visitorCount = 1284;
+const visitorFilePath = path.join(process.cwd(), 'visitor-count.json');
+
+try {
+  if (fs.existsSync(visitorFilePath)) {
+    const data = fs.readFileSync(visitorFilePath, 'utf8');
+    const parsed = JSON.parse(data);
+    if (typeof parsed.count === 'number') {
+      visitorCount = parsed.count;
+    }
+  } else {
+    fs.writeFileSync(visitorFilePath, JSON.stringify({ count: visitorCount }), 'utf8');
+  }
+} catch (e) {
+  console.log('[SINGKAP Server] Error initialized visitor count:', e);
+}
+
+// API endpoint to get and increment visitor count
+app.get('/api/visitor-count', (req, res) => {
+  const shouldIncrement = req.query.increment !== 'false';
+  if (shouldIncrement) {
+    visitorCount++;
+    try {
+      fs.writeFileSync(visitorFilePath, JSON.stringify({ count: visitorCount }), 'utf8');
+    } catch (e) {
+      console.log('[SINGKAP Server] Error saving visitor count:', e);
+    }
+  }
+  res.json({ count: visitorCount });
+});
 
 // Lazy initializer for GoogleGenAI
 let ai: GoogleGenAI | null = null;
@@ -444,7 +477,7 @@ app.get('/api/external-reports', async (req, res) => {
     console.log('[SINGKAP API] Running Strategy 1: Direct Spreadsheet CSV extractor for ID:', googleSheetId);
     const csvUrl = `https://docs.google.com/spreadsheets/d/${googleSheetId}/gviz/tq?tqx=out:csv`;
     
-    const csvResponse = await fetch(csvUrl);
+    const csvResponse = await fetch(csvUrl, { signal: AbortSignal.timeout(6000) });
     if (!csvResponse.ok) {
       throw new Error(`Public Google Sheet CSV endpoint returned status ${csvResponse.status}`);
     }
@@ -483,7 +516,7 @@ app.get('/api/external-reports', async (req, res) => {
     try {
       console.log('[SINGKAP API] Strategy 1 failed. Trying Strategy 2: Fetching via Apps Script URL:', appsScriptUrl);
       
-      const response = await fetch(appsScriptUrl);
+      const response = await fetch(appsScriptUrl, { signal: AbortSignal.timeout(8000) });
       console.log(`[SINGKAP API] Strategy 2 Response Status: ${response.status} ${response.statusText}`);
       
       if (response.ok) {
@@ -544,7 +577,8 @@ app.post('/api/external-reports/submit', async (req, res) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(req.body)
+      body: JSON.stringify(req.body),
+      signal: AbortSignal.timeout(8000)
     });
 
     const text = await response.text();

@@ -33,7 +33,8 @@ import {
   Settings,
   LogIn,
   UserCheck,
-  Home
+  Home,
+  Eye
 } from 'lucide-react';
 
 export default function App() {
@@ -153,6 +154,25 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'lapor' | 'ensiklopedia' | 'lapor-popt'>('dashboard');
   const [showAddForm, setShowAddForm] = useState(false);
   const [showIntegrasiConfig, setShowIntegrasiConfig] = useState<boolean>(false);
+  const [visitorCount, setVisitorCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchVisitorCount = async () => {
+      try {
+        const res = await fetch('/api/visitor-count');
+        if (res.ok) {
+          const data = await res.json();
+          if (typeof data.count === 'number') {
+            setVisitorCount(data.count);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch visitor count:', err);
+      }
+    };
+    fetchVisitorCount();
+  }, []);
+
   const [googleFormUrl, setGoogleFormUrl] = useState<string>(() => {
     return localStorage.getItem('singkap_opt_google_form') || 'https://forms.gle/8vbKDXJdxTYBe4ou6';
   });
@@ -486,6 +506,16 @@ _Sawah Lestari Sehat Bebas Racun Kimia Semasa Panen_`;
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xl md:text-2xl font-black tracking-tight text-slate-800">SINGKAP OPT</span>
                 <span className="bg-emerald-100/80 text-emerald-800 text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full border border-emerald-200/50 shadow-3xs">Sistem Koordinasi Hayati</span>
+                {visitorCount !== null && (
+                  <span className="bg-slate-100 text-slate-700 text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full border border-slate-200/50 shadow-3xs flex items-center gap-1.5 transition-all">
+                    <span className="relative flex h-1.5 w-1.5 align-middle">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                    </span>
+                    <Eye className="w-3 h-3 text-slate-500 inline-block" />
+                    <span>Pengunjung: {visitorCount.toLocaleString('id-ID')}</span>
+                  </span>
+                )}
               </div>
               <p className="text-[10px] md:text-[11px] text-emerald-800 font-extrabold tracking-wider mt-1 uppercase leading-snug">
                 SISTEM INFORMASI DAN GERAKAN AMAN PENGENDALIAN OPT Kec NUNBENA
