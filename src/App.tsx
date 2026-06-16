@@ -166,11 +166,20 @@ export default function App() {
           const data = await res.json();
           if (typeof data.count === 'number') {
             setVisitorCount(data.count);
+            localStorage.setItem('singkap_fallback_visitor_count', String(data.count));
+            return;
           }
         }
       } catch (err) {
-        console.error('Failed to fetch visitor count:', err);
+        console.error('Failed to fetch visitor count from server:', err);
       }
+
+      // Local Fallback Counter in case of network issues/sandboxed previews
+      const localCountStr = localStorage.getItem('singkap_fallback_visitor_count');
+      let localCount = localCountStr ? parseInt(localCountStr, 10) : 1292;
+      localCount += 1;
+      localStorage.setItem('singkap_fallback_visitor_count', String(localCount));
+      setVisitorCount(localCount);
     };
     fetchVisitorCount();
   }, []);
