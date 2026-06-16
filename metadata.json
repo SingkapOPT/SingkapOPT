@@ -1,0 +1,6 @@
+{
+  "name": "SINGKAP OPT",
+  "description": "Sistem Informasi dan Pelaporan Kondisi Serangan Organisme Pengganggu Tumbuhan berbasis koordinasi POPT, PPL, dan Kelompok Tani.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
