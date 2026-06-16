@@ -476,7 +476,7 @@ _Sawah Lestari Sehat Bebas Racun Kimia Semasa Panen_`;
             <img 
               src="https://drive.google.com/thumbnail?id=1iSICCUgZHZuGxe5I31n9gTqKqW0ILCq_&sz=w300"
               alt="Logo SINGKAP"
-              className="w-16 h-16 rounded-2xl object-contain bg-white border border-slate-200 p-1 shadow-md ring-4 ring-emerald-500/10 hover:scale-105 transition-transform duration-300 flex-shrink-0"
+              className="w-28 h-28 rounded-3xl object-contain bg-white border border-slate-200 p-1.5 shadow-md ring-4 ring-emerald-500/10 hover:scale-105 transition-transform duration-300 flex-shrink-0"
               referrerPolicy="no-referrer"
               onError={(e) => {
                 e.currentTarget.src = "https://docs.google.com/uc?export=view&id=1iSICCUgZHZuGxe5I31n9gTqKqW0ILCq_";

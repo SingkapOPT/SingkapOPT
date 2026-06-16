@@ -15,12 +15,12 @@ export default function InteractiveMap({ reports }: InteractiveMapProps) {
   // Hardcoded villages for Vector Map representation (Kecamatan Nunbena)
   // Each village has its center coordinates inside our mock grid, and boundaries
   const VILLAGES_METADATA = [
-    { name: 'Leloboko', threatLevel: 'Merah', description: 'Kawasan perbukitan tengah Nunbena. Komoditas jagung & kacang-kacangan, risiko berat Ulat Grayak Jagung.', color: 'bg-rose-100 border-rose-300' },
+    { name: 'Lillana', threatLevel: 'Merah', description: 'Kawasan perbukitan tengah Nunbena. Komoditas jagung & kacang-kacangan, risiko berat Ulat Grayak Jagung.', color: 'bg-rose-100 border-rose-300' },
     { name: 'Nunbena', threatLevel: 'Kuning', description: 'Pusat administrasi kecamatan. Sentra sayuran hortikultura, ubi jalar, dan padi ladang kering, waspada ulat daun.', color: 'bg-amber-100 border-amber-300' },
-    { name: 'Tunas', threatLevel: 'Hijau', description: 'Kawasan lereng selatan berbatu subur. Mayoritas jagung hutan dan gandum kering, saat ini terpantau aman.', color: 'bg-emerald-100 border-emerald-300' },
-    { name: 'Faturene', threatLevel: 'Kuning', description: 'Dataran tinggi timur bercurah hujan tinggi. Komoditas kopi, cokelat, dan alpukat, risiko ringan busuk buah.', color: 'bg-amber-100 border-amber-300' },
+    { name: 'Taneotob', threatLevel: 'Hijau', description: 'Kawasan lereng selatan berbatu subur. Mayoritas jagung hutan dan gandum kering, saat ini terpantau aman.', color: 'bg-emerald-100 border-emerald-300' },
+    { name: 'Tunbes', threatLevel: 'Kuning', description: 'Dataran tinggi timur bercurah hujan tinggi. Komoditas kopi, cokelat, dan alpukat, risiko ringan busuk buah.', color: 'bg-amber-100 border-amber-300' },
     { name: 'Noebesi', threatLevel: 'Merah', description: 'Lembah sungai perbatasan barat. Hamparan sawah irigasi sela dan padi gogo, siaga serangan Wereng Cokelat.', color: 'bg-rose-100 border-rose-300' },
-    { name: 'Penmin', threatLevel: 'Hijau', description: 'Lahan kering utara berpasir subur. Pusat cabai merah, tomat, dan kacang tanah, kondisi aman terkendali.', color: 'bg-emerald-100 border-emerald-300' },
+    { name: 'Fetomone', threatLevel: 'Hijau', description: 'Lahan kering utara berpasir subur. Pusat cabai merah, tomat, dan kacang tanah, kondisi aman terkendali.', color: 'bg-emerald-100 border-emerald-300' },
   ];
 
   // Map representation coordinates translated to a 2D grid scale
@@ -126,14 +126,14 @@ export default function InteractiveMap({ reports }: InteractiveMapProps) {
           {/* Sawah / Agri Zone Regions representing local terrain polygons */}
           <div className="absolute inset-0 py-8 px-12 flex flex-wrap gap-4 items-center justify-center">
             
-            {/* Leloboko Polygon Section */}
+            {/* Lillana Polygon Section */}
             <div 
-              onClick={() => setSelectedVillage('Leloboko')}
+              onClick={() => setSelectedVillage('Lillana')}
               className={`absolute top-[38%] left-[34%] w-[28%] h-[26%] rounded-[20px_40px_30px_25px] border-2 border-dashed flex flex-col justify-center items-center p-2.5 transition cursor-pointer hover:scale-[1.01] ${
-                selectedVillage === 'Leloboko' ? 'bg-rose-100/50 border-rose-500 ring-2 ring-rose-200/50' : 'bg-rose-50/15 border-rose-200 hover:bg-rose-50/30'
+                selectedVillage === 'Lillana' ? 'bg-rose-100/50 border-rose-500 ring-2 ring-rose-200/50' : 'bg-rose-50/15 border-rose-200 hover:bg-rose-50/30'
               }`}
             >
-              <span className="text-[9px] font-extrabold text-rose-800 tracking-wider">DS. LELOBOKO</span>
+              <span className="text-[9px] font-extrabold text-rose-800 tracking-wider">DS. LILLANA</span>
               <span className="text-[7px] font-bold text-rose-600 bg-white/70 px-1 py-0.2 rounded border mt-0.5">Siaga Ulat</span>
             </div>
 
@@ -148,25 +148,25 @@ export default function InteractiveMap({ reports }: InteractiveMapProps) {
               <span className="text-[7px] font-bold text-amber-600 bg-white/70 px-1 py-0.2 rounded border mt-0.5">Waspada OPT</span>
             </div>
 
-            {/* Tunas Polygon Section */}
+            {/* Taneotob Polygon Section */}
             <div 
-              onClick={() => setSelectedVillage('Tunas')}
+              onClick={() => setSelectedVillage('Taneotob')}
               className={`absolute top-[64%] left-[10%] w-[26%] h-[26%] rounded-[40px_20px_35px_30px] border-2 border-dashed flex flex-col justify-center items-center p-2.5 transition cursor-pointer hover:scale-[1.01] ${
-                selectedVillage === 'Tunas' ? 'bg-emerald-100/50 border-emerald-500 ring-2 ring-emerald-200/50' : 'bg-emerald-50/15 border-emerald-200 hover:bg-emerald-50/30'
+                selectedVillage === 'Taneotob' ? 'bg-emerald-100/50 border-emerald-500 ring-2 ring-emerald-200/50' : 'bg-emerald-50/15 border-emerald-200 hover:bg-emerald-50/30'
               }`}
             >
-              <span className="text-[9px] font-extrabold text-emerald-800 tracking-wider">DS. TUNAS</span>
+              <span className="text-[9px] font-extrabold text-emerald-800 tracking-wider">DS. TANEOTOB</span>
               <span className="text-[7px] font-bold text-emerald-600 bg-white/70 px-1 py-0.2 rounded border mt-0.5">Kondisi Aman</span>
             </div>
 
-            {/* Faturene Polygon Section */}
+            {/* Tunbes Polygon Section */}
             <div 
-              onClick={() => setSelectedVillage('Faturene')}
+              onClick={() => setSelectedVillage('Tunbes')}
               className={`absolute top-[38%] left-[65%] w-[26%] h-[26%] rounded-[20px_30px_20px_40px] border-2 border-dashed flex flex-col justify-center items-center p-2.5 transition cursor-pointer hover:scale-[1.01] ${
-                selectedVillage === 'Faturene' ? 'bg-amber-100/50 border-amber-500 ring-2 ring-amber-200/50' : 'bg-amber-50/15 border-amber-200 hover:bg-amber-50/30'
+                selectedVillage === 'Tunbes' ? 'bg-amber-100/50 border-amber-500 ring-2 ring-amber-200/50' : 'bg-amber-50/15 border-amber-200 hover:bg-amber-50/30'
               }`}
             >
-              <span className="text-[9px] font-extrabold text-amber-800 tracking-wider">DS. FATURENE</span>
+              <span className="text-[9px] font-extrabold text-amber-800 tracking-wider">DS. TUNBES</span>
               <span className="text-[7px] font-bold text-amber-600 bg-white/70 px-1 py-0.2 rounded border mt-0.5">Waspada Ringan</span>
             </div>
 
@@ -181,14 +181,14 @@ export default function InteractiveMap({ reports }: InteractiveMapProps) {
               <span className="text-[7px] font-bold text-rose-600 bg-white/70 px-1 py-0.2 rounded border mt-0.5">Siaga Wereng</span>
             </div>
 
-            {/* Penmin Polygon Section */}
+            {/* Fetomone Polygon Section */}
             <div 
-              onClick={() => setSelectedVillage('Penmin')}
+              onClick={() => setSelectedVillage('Fetomone')}
               className={`absolute top-[8%] left-[9%] w-[24%] h-[24%] rounded-[15px_40px_25px_30px] border-2 border-dashed flex flex-col justify-center items-center p-2.5 transition cursor-pointer hover:scale-[1.01] ${
-                selectedVillage === 'Penmin' ? 'bg-emerald-100/50 border-emerald-500 ring-2 ring-emerald-200/50' : 'bg-emerald-50/15 border-emerald-200 hover:bg-emerald-50/30'
+                selectedVillage === 'Fetomone' ? 'bg-emerald-100/50 border-emerald-500 ring-2 ring-emerald-200/50' : 'bg-emerald-50/15 border-emerald-200 hover:bg-emerald-50/30'
               }`}
             >
-              <span className="text-[9px] font-extrabold text-emerald-800 tracking-wider">DS. PENMIN</span>
+              <span className="text-[9px] font-extrabold text-emerald-800 tracking-wider">DS. FETOMONE</span>
               <span className="text-[7px] font-bold text-emerald-600 bg-white/70 px-1 py-0.2 rounded border mt-0.5">Kondisi Aman</span>
             </div>
 

@@ -251,12 +251,12 @@ export default function ReportForm({ onSubmitReport, onAnalyzeAI }: ReportFormPr
                   className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-slate-50/50 text-slate-800 font-medium"
                 >
                   <option value="" disabled>-- Pilih Desa Nunbena --</option>
-                  <option value="Faturene">Faturene</option>
-                  <option value="Leloboko">Leloboko</option>
+                  <option value="Fetomone">Fetomone</option>
+                  <option value="Lillana">Lillana</option>
                   <option value="Noebesi">Noebesi</option>
                   <option value="Nunbena">Nunbena</option>
-                  <option value="Penmin">Penmin</option>
-                  <option value="Tunas">Tunas</option>
+                  <option value="Taneotob">Taneotob</option>
+                  <option value="Tunbes">Tunbes</option>
                 </select>
               </div>
 

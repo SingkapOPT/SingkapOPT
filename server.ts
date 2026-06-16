@@ -345,21 +345,60 @@ function normalizeRawRows(rawRows: any[]): any[] {
       return fallbackVal;
     };
 
-    const farmerName = getVal(['NamaPelapor', 'NamaPetani', 'Nama', 'Pelapor', 'farmerName', 'NamaLengkap', 'NamaLengkapPelapor'], `Petani Desa ${getVal(['Desa', 'locationVillage'], 'Binaan')}`);
+    const locationVillageRaw = getVal(['LocationVillage', 'Desa', 'Kelurahan', 'locationVillage', 'DesaKelurahan', 'NamaDesa'], 'Nunbena');
+    
+    // Normalize location Village to correct capitalization / spelling if it matches any of our 6 villages
+    let locationVillage = 'Nunbena';
+    let defaultLat = -9.7042;
+    let defaultLng = 124.2250;
+    
+    const vName = locationVillageRaw.toLowerCase().trim();
+    if (vName.includes('lillana') || vName.includes('lilana')) {
+      locationVillage = 'Lillana';
+      defaultLat = -9.7000;
+      defaultLng = 124.2180;
+    } else if (vName.includes('nunbena')) {
+      locationVillage = 'Nunbena';
+      defaultLat = -9.6600;
+      defaultLng = 124.2260;
+    } else if (vName.includes('taneotob')) {
+      locationVillage = 'Taneotob';
+      defaultLat = -9.7330;
+      defaultLng = 124.1700;
+    } else if (vName.includes('tunbes')) {
+      locationVillage = 'Tunbes';
+      defaultLat = -9.7000;
+      defaultLng = 124.2800;
+    } else if (vName.includes('noebesi')) {
+      locationVillage = 'Noebesi';
+      defaultLat = -9.6905;
+      defaultLng = 124.1640;
+    } else if (vName.includes('fetomone')) {
+      locationVillage = 'Fetomone';
+      defaultLat = -9.6605;
+      defaultLng = 124.1680;
+    } else {
+      // Fallback: use raw value but default to Nunbena coordinates
+      locationVillage = locationVillageRaw;
+    }
+
+    const farmerName = getVal(['NamaPelapor', 'NamaPetani', 'Nama', 'Pelapor', 'farmerName', 'NamaLengkap', 'NamaLengkapPelapor'], `Petani Desa ${locationVillage}`);
     const contact = getVal(['Contact', 'Kontak', 'NomorWA', 'NoWA', 'NoHP', 'WhatsApp', 'NoTelp', 'contact', 'NomorWhatsapp', 'NomorTelepon', 'NoHandphone', 'NoHpWa', 'nohpwa', 'nohp'], '');
     const cropType = getVal(['CropType', 'Komoditas', 'Tanaman', 'JenisTanaman', 'cropType', 'JenisKomoditas'], 'Padi');
     const pestName = getVal(['PestName', 'Hama', 'OPT', 'JenisHama', 'pestName', 'NamaHama', 'NamaOPT', 'HamaPenyakit', 'Kendal', 'Kendala', 'kendal', 'kendala'], 'Wereng Batang Cokelat');
     const severity = getVal(['Severity', 'Intensitas', 'KategoriSerangan', 'severity', 'TingkatKeparahan', 'TingkatSerangan', 'Keparahan'], 'Sedang');
     const affectedArea = parseFloat(getVal(['AffectedArea', 'LuasSerangan', 'LuasSeranganHa', 'LuasLahan', 'Luas', 'affectedArea', 'EstimasiLuasSeranganHa', 'EstimasiLuas', 'LuasSeranganHektar', 'LuasHektar'], '1.0'));
-    const locationVillage = getVal(['LocationVillage', 'Desa', 'Kelurahan', 'locationVillage', 'DesaKelurahan', 'NamaDesa'], 'Kandang Gampang');
-    const locationDistrict = getDistrictByVillage(locationVillage, getVal(['LocationDistrict', 'Kecamatan', 'locationDistrict', 'NamaKecamatan'], 'Karangreja'));
+    const locationDistrict = getDistrictByVillage(locationVillage, getVal(['LocationDistrict', 'Kecamatan', 'locationDistrict', 'NamaKecamatan'], 'Nunbena'));
     const description = getVal(['Description', 'Keterangan', 'DeskripsiGejala', 'Deskripsi', 'description', 'KeteranganTambahan', 'DeskripsiGejalaKeterangantambahan', 'FotoKondisi', 'fotokondisi'], 'Serangan OPT dilaporkan dari Google Form.');
     const attackDate = getVal(['AttackDate', 'Tanggal', 'TanggalSerangan', 'date', 'attackDate', 'Timestamp', 'Waktu'], new Date().toISOString().split('T')[0]);
     const statusValue = getVal(['Status', 'StatusLaporan', 'status'], 'Menunggu Verifikasi');
 
     // Geolocation fallback
-    const lat = parseFloat(getVal(['Latitude', 'Lintang', 'latitude'], (-7.3820 + (Math.random() - 0.5) * 0.05).toString()));
-    const lng = parseFloat(getVal(['Longitude', 'Bujur', 'longitude'], (109.2250 + (Math.random() - 0.5) * 0.05).toString()));
+    const latRaw = getVal(['Latitude', 'Lintang', 'latitude'], '');
+    const lngRaw = getVal(['Longitude', 'Bujur', 'longitude'], '');
+    
+    const lat = latRaw ? parseFloat(latRaw) : defaultLat;
+    const lng = lngRaw ? parseFloat(lngRaw) : defaultLng;
 
     return {
       id: getVal(['id', 'IDLaporan', 'ID', 'Id'], `REP-SHEET-${101 + i}`),
@@ -372,8 +411,8 @@ function normalizeRawRows(rawRows: any[]): any[] {
       affectedArea: isNaN(affectedArea) ? 1.0 : affectedArea,
       locationVillage,
       locationDistrict,
-      latitude: isNaN(lat) ? -7.3820 : lat,
-      longitude: isNaN(lng) ? 109.2250 : lng,
+      latitude: isNaN(lat) ? defaultLat : lat,
+      longitude: isNaN(lng) ? defaultLng : lng,
       attackDate: attackDate.split(' ')[0] || attackDate, // remove timestamp hours if any
       description,
       status: (['Menunggu Verifikasi', 'Terverifikasi', 'Terkendali'].includes(statusValue) ? statusValue : 'Menunggu Verifikasi'),
@@ -381,7 +420,7 @@ function normalizeRawRows(rawRows: any[]): any[] {
       pplVerifiedBy: getVal(['PplVerifiedBy', 'pplVerifiedBy'], ''),
       pplVerifiedAt: getVal(['PplVerifiedAt', 'pplVerifiedAt'], ''),
       poptActionTaken: getVal(['PoptActionTaken', 'TindakanPOPT', 'poptActionTaken'], ''),
-      poptControlledBy: getVal(['PoptControlledBy', 'poptControlledBy'], ''),
+      poptControlledBy: getVal(['poptControlledBy', 'poptControlledBy'], ''),
       poptControlledAt: getVal(['poptControlledAt', 'poptControlledAt'], ''),
       createdAt: getVal(['CreatedAt', 'Timestamp', 'createdAt'], new Date().toISOString())
     };
