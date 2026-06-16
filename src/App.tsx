@@ -34,7 +34,8 @@ import {
   LogIn,
   UserCheck,
   Home,
-  Eye
+  Eye,
+  X
 } from 'lucide-react';
 
 export default function App() {
@@ -155,6 +156,7 @@ export default function App() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showIntegrasiConfig, setShowIntegrasiConfig] = useState<boolean>(false);
   const [visitorCount, setVisitorCount] = useState<number | null>(null);
+  const [showVisitorPopup, setShowVisitorPopup] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchVisitorCount = async () => {
@@ -506,16 +508,6 @@ _Sawah Lestari Sehat Bebas Racun Kimia Semasa Panen_`;
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xl md:text-2xl font-black tracking-tight text-slate-800">SINGKAP OPT</span>
                 <span className="bg-emerald-100/80 text-emerald-800 text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full border border-emerald-200/50 shadow-3xs">Sistem Koordinasi Hayati</span>
-                {visitorCount !== null && (
-                  <span className="bg-slate-100 text-slate-700 text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full border border-slate-200/50 shadow-3xs flex items-center gap-1.5 transition-all">
-                    <span className="relative flex h-1.5 w-1.5 align-middle">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-                    </span>
-                    <Eye className="w-3 h-3 text-slate-500 inline-block" />
-                    <span>Pengunjung: {visitorCount.toLocaleString('id-ID')}</span>
-                  </span>
-                )}
               </div>
               <p className="text-[10px] md:text-[11px] text-emerald-800 font-extrabold tracking-wider mt-1 uppercase leading-snug">
                 SISTEM INFORMASI DAN GERAKAN AMAN PENGENDALIAN OPT Kec NUNBENA
@@ -1293,6 +1285,36 @@ _Sawah Lestari Sehat Bebas Racun Kimia Semasa Panen_`;
               </a>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Floating Visitor Counter Popup (Bottom Left) */}
+      {visitorCount !== null && showVisitorPopup && (
+        <div id="visitor-popup" className="fixed bottom-4 left-4 z-50 animate-shake transition-all duration-300">
+          <div className="bg-white/95 backdrop-blur-md border border-slate-200 shadow-lg p-3 rounded-2xl flex items-center gap-3 max-w-sm ring-4 ring-emerald-500/5 hover:scale-[1.02] transition-transform duration-300 relative group pr-7">
+            <button
+              onClick={() => setShowVisitorPopup(false)}
+              className="absolute top-1.5 right-1.5 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100 transition-colors"
+              title="Sembunyikan"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 shrink-0">
+              <Eye className="w-4 h-4" />
+            </div>
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-1.5">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                </span>
+                <span className="text-[9px] font-black tracking-wider uppercase text-emerald-800">Sistem Live</span>
+              </div>
+              <p className="text-xs font-black text-slate-800 leading-none">
+                {visitorCount.toLocaleString('id-ID')} <span className="text-[9px] font-bold text-slate-500 font-sans uppercase">Kunjungan</span>
+              </p>
+            </div>
           </div>
         </div>
       )}
