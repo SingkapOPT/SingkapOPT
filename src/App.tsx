@@ -7,6 +7,7 @@ import InteractiveMap from './components/InteractiveMap';
 import PestCatalog from './components/PestCatalog';
 import RekapLaporanTable from './components/RekapLaporanTable';
 import LoginModal from './components/LoginModal';
+import VisitorStatsModal from './components/VisitorStatsModal';
 
 // Lucide Icons
 import {
@@ -35,7 +36,8 @@ import {
   UserCheck,
   Home,
   Eye,
-  X
+  X,
+  BarChart3
 } from 'lucide-react';
 
 export default function App() {
@@ -156,6 +158,8 @@ export default function App() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showIntegrasiConfig, setShowIntegrasiConfig] = useState<boolean>(false);
   const [visitorCount, setVisitorCount] = useState<number | null>(null);
+  const [dailyVisitors, setDailyVisitors] = useState<Record<string, number>>({});
+  const [isVisitorStatsModalOpen, setIsVisitorStatsModalOpen] = useState<boolean>(false);
   const [showVisitorPopup, setShowVisitorPopup] = useState<boolean>(true);
 
   useEffect(() => {
@@ -166,7 +170,13 @@ export default function App() {
           const data = await res.json();
           if (typeof data.count === 'number') {
             setVisitorCount(data.count);
+            if (data.daily && typeof data.daily === 'object') {
+              setDailyVisitors(data.daily);
+            }
             localStorage.setItem('singkap_fallback_visitor_count', String(data.count));
+            if (data.daily) {
+              localStorage.setItem('singkap_fallback_daily_visitors', JSON.stringify(data.daily));
+            }
             return;
           }
         }
@@ -176,10 +186,25 @@ export default function App() {
 
       // Local Fallback Counter in case of network issues/sandboxed previews
       const localCountStr = localStorage.getItem('singkap_fallback_visitor_count');
-      let localCount = localCountStr ? parseInt(localCountStr, 10) : 1292;
+      // If there is an old large mock number, reset to 0, otherwise read or default to 0
+      let localCount = localCountStr && parseInt(localCountStr, 10) < 1000 ? parseInt(localCountStr, 10) : 0;
       localCount += 1;
       localStorage.setItem('singkap_fallback_visitor_count', String(localCount));
       setVisitorCount(localCount);
+
+      const savedDaily = localStorage.getItem('singkap_fallback_daily_visitors');
+      if (savedDaily) {
+        try {
+          setDailyVisitors(JSON.parse(savedDaily));
+        } catch {
+          // safe skip
+        }
+      } else {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const mockDaily = { [todayStr]: localCount };
+        setDailyVisitors(mockDaily);
+        localStorage.setItem('singkap_fallback_daily_visitors', JSON.stringify(mockDaily));
+      }
     };
     fetchVisitorCount();
   }, []);
@@ -688,6 +713,17 @@ _Sawah Lestari Sehat Bebas Racun Kimia Semasa Panen_`;
                   <div className="flex flex-wrap items-center gap-2 text-[11px]">
                     <span className="text-slate-400 font-medium">Sinkronisasi terakhir: <strong className="text-slate-600">{lastSyncedTime}</strong></span>
                     
+                    {isLoggedIn && (
+                      <button
+                        onClick={() => setIsVisitorStatsModalOpen(true)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg text-emerald-800 font-extrabold transition hover:scale-[1.02] cursor-pointer"
+                        title="Lihat rincian kunjungan setiap hari"
+                      >
+                        <Users className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Statistik Pengunjung</span>
+                      </button>
+                    )}
+
                     <button
                       onClick={() => setShowIntegrasiConfig((prev) => !prev)}
                       className={`flex items-center gap-1 px-3 py-1.5 border rounded-lg transition text-slate-700 font-bold ${
@@ -1312,7 +1348,7 @@ _Sawah Lestari Sehat Bebas Racun Kimia Semasa Panen_`;
             <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 shrink-0">
               <Eye className="w-4 h-4" />
             </div>
-            <div className="space-y-0.5">
+            <div className="space-y-0.5 text-left">
               <div className="flex items-center gap-1.5">
                 <span className="relative flex h-1.5 w-1.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -1323,10 +1359,28 @@ _Sawah Lestari Sehat Bebas Racun Kimia Semasa Panen_`;
               <p className="text-xs font-black text-slate-800 leading-none">
                 {visitorCount.toLocaleString('id-ID')} <span className="text-[9px] font-bold text-slate-500 font-sans uppercase">Kunjungan</span>
               </p>
+              {isLoggedIn && (
+                <button
+                  type="button"
+                  onClick={() => setIsVisitorStatsModalOpen(true)}
+                  className="mt-1.5 text-[9px] text-emerald-700 hover:text-emerald-950 font-black uppercase flex items-center gap-1 cursor-pointer hover:underline transition-colors block border border-emerald-250 rounded px-2 py-0.5 bg-emerald-50/50"
+                >
+                  <BarChart3 className="w-3 h-3 text-emerald-600 inline-block" />
+                  <span>Cek Statistik Harian ↗</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
       )}
+
+      {/* Daily Visitor Statistics Modal */}
+      <VisitorStatsModal
+        isOpen={isVisitorStatsModalOpen}
+        onClose={() => setIsVisitorStatsModalOpen(false)}
+        dailyVisitors={dailyVisitors}
+        totalCount={visitorCount || 0}
+      />
 
       {/* Login Modal Auth Handler */}
       <LoginModal

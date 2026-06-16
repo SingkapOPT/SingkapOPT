@@ -12,9 +12,23 @@ const PORT = 3000;
 
 app.use(express.json({ limit: '10mb' }));
 
-// Persistent Visitor Counter
-let visitorCount = 1284;
+// Persistent Visitor Counter with Daily Breakdowns
+let visitorCount = 0;
+let dailyVisitors: Record<string, number> = {};
 const visitorFilePath = path.join(process.cwd(), 'visitor-count.json');
+
+// Helper to get today's date in Central Indonesian Time (WITA - UTC+8, NTT)
+function getTodayString() {
+  const date = new Date();
+  const utcOffset = date.getTimezoneOffset(); // in minutes
+  const offsetWita = 8 * 60; // 480 minutes
+  const witaTime = new Date(date.getTime() + (offsetWita + utcOffset) * 60000);
+  
+  const yyyy = witaTime.getFullYear();
+  const mm = String(witaTime.getMonth() + 1).padStart(2, '0');
+  const dd = String(witaTime.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
 
 try {
   if (fs.existsSync(visitorFilePath)) {
@@ -22,9 +36,14 @@ try {
     const parsed = JSON.parse(data);
     if (typeof parsed.count === 'number') {
       visitorCount = parsed.count;
+    } else if (typeof parsed.total === 'number') {
+      visitorCount = parsed.total;
+    }
+    if (parsed.daily && typeof parsed.daily === 'object') {
+      dailyVisitors = parsed.daily;
     }
   } else {
-    fs.writeFileSync(visitorFilePath, JSON.stringify({ count: visitorCount }), 'utf8');
+    fs.writeFileSync(visitorFilePath, JSON.stringify({ total: visitorCount, count: visitorCount, daily: dailyVisitors }), 'utf8');
   }
 } catch (e) {
   console.log('[SINGKAP Server] Error initialized visitor count:', e);
@@ -33,15 +52,18 @@ try {
 // API endpoint to get and increment visitor count
 app.get('/api/visitor-count', (req, res) => {
   const shouldIncrement = req.query.increment !== 'false';
+  const today = getTodayString();
+  
   if (shouldIncrement) {
     visitorCount++;
+    dailyVisitors[today] = (dailyVisitors[today] || 0) + 1;
     try {
-      fs.writeFileSync(visitorFilePath, JSON.stringify({ count: visitorCount }), 'utf8');
+      fs.writeFileSync(visitorFilePath, JSON.stringify({ total: visitorCount, count: visitorCount, daily: dailyVisitors }, null, 2), 'utf8');
     } catch (e) {
       console.log('[SINGKAP Server] Error saving visitor count:', e);
     }
   }
-  res.json({ count: visitorCount });
+  res.json({ count: visitorCount, daily: dailyVisitors });
 });
 
 // Lazy initializer for GoogleGenAI
