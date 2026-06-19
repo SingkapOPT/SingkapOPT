@@ -1,7 +1,79 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PEST_CATALOG } from '../data';
 import { PestControlGuide } from '../types';
-import { CheckSquare, Square, ChevronRight, Leaf, Shield, BookOpen, Layers } from 'lucide-react';
+import { CheckSquare, Square, ChevronRight, Leaf, Shield, BookOpen, Layers, Sparkles } from 'lucide-react';
+
+function AutoImageSlider({ urls, name }: { urls: string[]; name: string }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (!urls || urls.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % urls.length);
+    }, 4000); // Cycle every 4 seconds
+    return () => clearInterval(timer);
+  }, [urls]);
+
+  if (!urls || urls.length === 0) {
+    return (
+      <div id="no-image-placeholder" className="w-full h-48 md:h-64 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 border border-slate-200">
+        <span className="text-xs font-mono">Gambar tidak tersedia</span>
+      </div>
+    );
+  }
+
+  return (
+    <div id="auto-image-slider" className="relative w-full h-48 md:h-64 bg-slate-955 rounded-2xl overflow-hidden shadow-md border border-slate-200/80 group">
+      {urls.map((url, idx) => (
+        <div
+          key={idx}
+          className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
+            idx === currentIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-105 pointer-events-none'
+          }`}
+          style={{ transitionProperty: 'opacity, transform' }}
+        >
+          <img
+            src={url}
+            alt={`${name} slide ${idx + 1}`}
+            className="w-full h-full object-cover select-none"
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              // Reliable botanical placeholder if a image link is blocklisted / fails
+              target.src = "https://images.unsplash.com/photo-1473081556163-2a17de81fc97?auto=format&fit=crop&w=800&q=80";
+              target.referrerPolicy = "no-referrer";
+            }}
+          />
+          {/* Legend indicator overlay */}
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/70 to-transparent p-4 flex items-end justify-between">
+            <span className="text-white text-[10px] font-mono tracking-widest uppercase bg-emerald-600/80 px-2 py-0.5 rounded backdrop-blur-xs font-bold">
+              Foto Lapangan #{idx + 1}
+            </span>
+            <span className="text-slate-200 text-[10px] font-mono font-bold">
+              {idx + 1} / {urls.length}
+            </span>
+          </div>
+        </div>
+      ))}
+
+      {/* Manual Switch Dots Indicators */}
+      {urls.length > 1 && (
+        <div className="absolute bottom-3 right-4 flex gap-1.5 z-10 bg-slate-900/60 px-2.5 py-1 rounded-full backdrop-blur-xs border border-white/10">
+          {urls.map((_, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => setCurrentIndex(idx)}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                idx === currentIndex ? 'bg-emerald-400 w-3' : 'bg-white/50 hover:bg-white'
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function PestCatalog() {
   const [selectedPest, setSelectedPest] = useState<PestControlGuide>(PEST_CATALOG[0]);
@@ -16,106 +88,129 @@ export default function PestCatalog() {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden">
+    <div id="pestisida-nabati-container" className="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden">
       
       {/* Title panel */}
       <div className="bg-slate-900 text-white p-5 flex items-center space-x-3">
         <div className="p-2.5 bg-slate-800 rounded-xl text-emerald-400">
           <BookOpen className="w-5 h-5" />
         </div>
-        <div>
-          <h3 className="font-bold text-sm">Ensiklopedia Pengendalian OPT Alami</h3>
-          <p className="text-[10px] text-slate-400 mt-0.5 font-indonesian">Panduan Praktis Agens Pengendali Hayati (APH) & Pestisida Nabati Ramah Lingkungan.</p>
+        <div className="text-left">
+          <h3 className="font-bold text-sm">Informasi Tanaman & Racikan Pestisida Nabati</h3>
+          <p className="text-[10px] text-slate-400 mt-0.5 font-indonesian">Koleksi Agens Pengendali Hayati (APH) & Pestisida Nabati Lokal Kecamatan Nunbena NTT.</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 md:divide-x md:divide-slate-100 min-h-[480px]">
-        {/* Left Side: Pest Selector List */}
-        <div className="md:col-span-4 p-4 space-y-2 max-h-[550px] overflow-y-auto">
-          <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold block px-2 mb-2">Daftar OPT Utama</span>
+        {/* Left Side: Pestisida Selector List */}
+        <div className="md:col-span-4 p-4 space-y-2 max-h-[620px] overflow-y-auto">
+          <div className="flex items-center gap-1.5 px-2 mb-2 justify-between">
+            <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Daftar Bahan Nabati</span>
+            <span className="bg-emerald-50 text-emerald-800 text-[8px] font-black uppercase px-2 py-0.5 rounded font-mono">7 Spesies</span>
+          </div>
+          
           {PEST_CATALOG.map((pest) => (
             <button
               key={pest.id}
               onClick={() => {
                 setSelectedPest(pest);
-                // Reset recipe checks when switching pest
                 setCheckedSteps({});
               }}
-              className={`w-full text-left p-3 rounded-xl flex items-center justify-between transition group-all ${
+              className={`w-full text-left p-3.5 rounded-xl flex items-center justify-between transition-all duration-250 cursor-pointer border ${
                 selectedPest.id === pest.id
-                  ? 'bg-emerald-50 text-emerald-900 border border-emerald-100 font-semibold'
-                  : 'bg-white hover:bg-slate-50 text-slate-700 border border-transparent'
+                  ? 'bg-emerald-50/75 text-emerald-950 border-emerald-150 font-semibold shadow-3xs'
+                  : 'bg-white hover:bg-slate-50 text-slate-700 border-transparent hover:border-slate-100'
               }`}
             >
-              <div className="space-y-0.5">
-                <h4 className="text-xs font-bold leading-tight flex items-center gap-1.5">
+              <div className="space-y-1">
+                <h4 className="text-xs font-black leading-tight flex items-center gap-1 flex-wrap">
                   <Leaf className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-                  {pest.name}
+                  <span>{pest.name}</span>
+                  {pest.localName && (
+                    <span className="text-slate-500 font-normal italic font-sans text-[11px] ml-1">
+                      ({pest.localName})
+                    </span>
+                  )}
                 </h4>
-                <p className="text-[10px] font-mono text-slate-400 italic font-medium">
+                <p className="text-[9.5px] font-mono text-slate-400 italic">
                   {pest.scientificName}
                 </p>
-                <div className="flex gap-1 pt-1">
-                  {pest.targetCrops.map(c => (
-                    <span key={c} className="text-[8px] bg-white px-1.5 py-0.5 rounded border border-slate-100 font-bold text-slate-500">{c}</span>
+                <div id="target-crops-chips" className="flex flex-wrap gap-1 pt-1.5">
+                  {pest.targetCrops.slice(0, 3).map(c => (
+                    <span key={c} className="text-[8px] bg-slate-100 px-1.5 py-0.5 rounded font-bold text-slate-550 border border-slate-200/40">
+                      {c}
+                    </span>
                   ))}
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition" />
+              <ChevronRight className={`w-4 h-4 text-slate-450 transition ${selectedPest.id === pest.id ? 'translate-x-0.5 text-emerald-700' : ''}`} />
             </button>
           ))}
         </div>
 
-        {/* Right Side: Pest Solutions and Symptoms Detail */}
-        <div className="md:col-span-8 p-6 space-y-6 max-h-[550px] overflow-y-auto">
-          <div className="flex flex-col md:flex-row gap-5 items-start justify-between pb-4 border-b border-slate-100">
+        {/* Right Side: Pestisida Solutions and Images Detail */}
+        <div id="pestisida-detail-panel" className="md:col-span-8 p-6 space-y-6 max-h-[620px] overflow-y-auto">
+          
+          {/* Header Block containing Localized Name & Scientific Name */}
+          <div className="flex flex-col gap-3 pb-4 border-b border-slate-100 text-left">
             <div className="space-y-1">
-              <span className="text-[10px] uppercase font-mono tracking-widest text-emerald-600 font-black px-2 py-0.5 bg-emerald-50 rounded-full">Spesifikasi Biologis</span>
-              <h2 className="text-xl font-black text-slate-900 mt-1">{selectedPest.name}</h2>
-              <p className="text-xs font-mono text-slate-400 italic">Nama Ilmiah: {selectedPest.scientificName}</p>
+              <span className="text-[9px] uppercase font-mono tracking-widest text-emerald-700 font-black px-2 py-0.5 bg-emerald-100 rounded-md inline-block">
+                Kearifan Lokal Nunbena
+              </span>
+              <h2 className="text-xl font-black text-slate-900 flex items-center gap-2 mt-1">
+                {selectedPest.name}
+                {selectedPest.localName && (
+                  <span className="italic text-slate-500 font-medium">
+                    ({selectedPest.localName})
+                  </span>
+                )}
+              </h2>
+              <p className="text-xs font-mono text-slate-400 italic">
+                Suku/Nama Latin: <strong className="text-slate-600 font-semibold">{selectedPest.scientificName}</strong>
+              </p>
             </div>
-            {selectedPest.imageUrl && (
-              <div className="w-full md:w-32 h-20 rounded-xl overflow-hidden shadow-xs border border-slate-200 flex-shrink-0 group relative">
-                <img 
-                  src={selectedPest.imageUrl} 
-                  alt={selectedPest.name}
-                  className="w-full h-full object-cover transition duration-300 group-hover:scale-110"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition duration-200" />
-              </div>
-            )}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {/* Symptoms / Gejala list */}
-            <div className="bg-amber-50/30 rounded-xl p-4 border border-amber-100/40 space-y-2.5">
-              <h4 className="text-xs font-extrabold text-amber-800 flex items-center gap-1.5">
+          {/* Automatic Switching Slideshow of Images */}
+          {selectedPest.imageUrls && (
+            <div id="image-gallery-box" className="space-y-1.5 text-left">
+              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-500" /> Galeri Foto Pembelajaran Tanaman
+              </span>
+              <AutoImageSlider urls={selectedPest.imageUrls} name={selectedPest.name} />
+            </div>
+          )}
+
+          {/* Double Column Info Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 text-left">
+            {/* Symptoms Detected */}
+            <div className="bg-amber-50/20 rounded-xl p-4 border border-amber-150/40 space-y-2.5">
+              <h4 className="text-xs font-extrabold text-amber-900 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-amber-500 block"></span>
-                Identifikasi Gejala di Sawah:
+                Identifikasi Kerusakan di Lahan:
               </h4>
-              <ul className="space-y-1.5 text-xs text-slate-600 pl-1 list-none">
+              <ul className="space-y-1.5 text-xs text-slate-650 pl-1 list-none">
                 {selectedPest.symptoms.map((symptom, i) => (
-                  <li key={i} className="flex gap-1.5 items-start">
-                    <span className="text-amber-500 font-bold">✓</span>
-                    <span className="leading-relaxed">{symptom}</span>
+                  <li key={i} className="flex gap-2 items-start leading-relaxed">
+                    <span className="text-amber-500 font-bold select-none">✓</span>
+                    <span>{symptom}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            {/* Target Crops */}
-            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 space-y-2">
-              <h4 className="text-xs font-extrabold text-slate-700 flex items-center gap-1.5">
-                <Layers className="w-4 h-4 text-slate-400" />
-                Varietas Tanaman Rentan Terinfeksi:
+            {/* Target Crops Variety */}
+            <div className="bg-slate-55/40 rounded-xl p-4 border border-slate-100 space-y-2.5">
+              <h4 className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                <Layers className="w-4 h-4 text-emerald-700" />
+                Tanaman Sawah Utama yang Dilindungi:
               </h4>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Tindakan pencegahan berkala disarankan dipersiapkan jika kelompok tani menanam tanaman berikut secara massal tanpa tumpang sari:
+              <p className="text-xs text-slate-500 leading-relaxed font-indonesian">
+                Direkomendasikan diaplikasikan secara berkala pada komoditas lumbung pangan berikut:
               </p>
               <div className="flex flex-wrap gap-1.5 pt-1">
                 {selectedPest.targetCrops.map(crop => (
-                  <span key={crop} className="text-xs bg-white text-emerald-800 font-semibold border border-slate-200/60 px-2.5 py-0.5 rounded-lg">
+                  <span key={crop} className="text-[11px] bg-white text-emerald-800 font-extrabold border border-emerald-100 px-2.5 py-1 rounded-lg shadow-3xs flex items-center gap-1">
                     🌾 {crop}
                   </span>
                 ))}
@@ -123,54 +218,58 @@ export default function PestCatalog() {
             </div>
           </div>
 
-          {/* Biological Controls */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
-              <Shield className="w-4 h-4 text-emerald-600" />
-              Metode Pengendalian Biologis Organik (Agens Hayati)
+          {/* Botanical Benefits panel */}
+          <div className="space-y-3 text-left">
+            <h3 className="text-xs font-bold text-emerald-850 uppercase tracking-wider flex items-center gap-1.5">
+              <Shield className="w-4 h-4 text-emerald-600 animate-pulse" />
+              Kegunaan & Khasiat Kimiawi Tanaman
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
               {selectedPest.biologicalControls.map((bio, index) => (
-                <div key={index} className="bg-emerald-50/10 p-3.5 rounded-xl border border-emerald-100/30 relative flex flex-col justify-between">
+                <div key={index} className="bg-emerald-50/10 p-4 rounded-xl border border-emerald-100/50 relative flex flex-col justify-between">
                   <div>
-                    <h4 className="font-extrabold text-xs text-emerald-900 group-hover:text-emerald-700 flex items-center gap-1">
-                      <span className="text-[10px]">🌿</span> {bio.title}
+                    <h4 className="font-extrabold text-xs text-emerald-900 flex items-center gap-1">
+                      🌿 {bio.title}
                     </h4>
-                    <p className="text-slate-500 text-[10px] leading-relaxed mt-1">{bio.description}</p>
+                    <p className="text-slate-600 text-[10.5px] leading-relaxed mt-1.5">{bio.description}</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Organic Recipes / Pestisida Nabati Checklist */}
+          {/* Interactive Recipes Preparation Guideline Checklist */}
           {selectedPest.organicRecipes && selectedPest.organicRecipes.length > 0 && (
-            <div className="space-y-3 pt-2 border-t border-slate-100">
-              <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">
-                🔬 Ramuan Pembuatan Pestisida Nabati Praktis
+            <div className="space-y-4 pt-3 border-t border-slate-100 text-left">
+              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                🧪 Panduan Meramu & Cara Pembuatan Lapangan
               </h3>
+              
               {selectedPest.organicRecipes.map((recipe, rIdx) => (
-                <div key={rIdx} className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1">
-                      🧪 {recipe.name}
+                <div key={rIdx} className="bg-slate-50 p-4 rounded-xl border border-slate-150 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-slate-200 text-slate-800 font-bold text-[9px] font-mono px-2 py-0.5 rounded-lg border border-slate-300">
+                      Resep Utama
+                    </span>
+                    <h4 className="text-xs font-black text-slate-850">
+                      {recipe.name}
                     </h4>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                     {/* Ingredients list */}
-                    <div className="md:col-span-2 space-y-1 bg-white p-2.5 rounded-lg border border-slate-200/50">
-                      <span className="text-[9px] uppercase tracking-wider font-bold text-slate-400 block mb-1">Bahan-Bahan:</span>
-                      <ul className="text-[10px] text-slate-600 space-y-1 list-disc pl-3 leading-relaxed">
+                    <div className="md:col-span-2 space-y-1.5 bg-white p-3 rounded-lg border border-slate-200/50">
+                      <span className="text-[9px] uppercase tracking-wider font-extrabold text-slate-400 block mb-1 border-b border-slate-105 pb-1">Bahan-Bahan Rujukan:</span>
+                      <ul className="text-[10.5px] text-slate-650 space-y-1 my-1 list-disc pl-3 leading-relaxed">
                         {recipe.ingredients.map((ing, i) => (
-                          <li key={i}>{ing}</li>
+                          <li key={i} className="font-medium text-slate-800">{ing}</li>
                         ))}
                       </ul>
                     </div>
 
                     {/* Interactive preparation checklist */}
-                    <div className="md:col-span-3 space-y-2">
-                      <span className="text-[9px] uppercase tracking-wider font-bold text-slate-400 block">Langkah Pembuatan (Centang sesudah selesai):</span>
+                    <div className="md:col-span-3 space-y-2 bg-white/50 p-3 rounded-lg border border-slate-150/60">
+                      <span className="text-[9px] uppercase tracking-wider font-extrabold text-slate-400 block pb-1 border-b border-slate-105">Langkah Pembuatan (Centang sesudah selesai):</span>
                       <div className="space-y-1.5">
                         {recipe.steps.map((step, sIdx) => {
                           const hasChecked = checkedSteps[`${selectedPest.id}-${rIdx}-${sIdx}`] || false;
@@ -179,16 +278,16 @@ export default function PestCatalog() {
                               key={sIdx}
                               type="button"
                               onClick={() => toggleCheckStep(rIdx, sIdx)}
-                              className="w-full text-left flex items-start space-x-2 text-[10px] font-medium p-1.5 hover:bg-white rounded transition"
+                              className="w-full text-left flex items-start space-x-2 text-[10.5px] font-medium p-1.5 hover:bg-white rounded transition-colors group cursor-pointer"
                             >
                               <span className="text-emerald-700 flex-shrink-0 mt-0.5">
                                 {hasChecked ? (
                                   <CheckSquare className="w-3.5 h-3.5 text-emerald-600" />
                                 ) : (
-                                  <Square className="w-3.5 h-3.5 text-slate-300" />
+                                  <Square className="w-3.5 h-3.5 text-slate-300 group-hover:text-emerald-500" />
                                 )}
                               </span>
-                              <span className={`leading-snug ${hasChecked ? 'line-through text-slate-400' : 'text-slate-600'}`}>
+                              <span className={`leading-snug transition-colors ${hasChecked ? 'line-through text-slate-400' : 'text-slate-700 font-medium'}`}>
                                 {sIdx + 1}. {step}
                               </span>
                             </button>

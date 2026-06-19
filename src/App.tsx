@@ -648,7 +648,7 @@ _Sawah Lestari Sehat Bebas Racun Kimia Semasa Panen_`;
               }`}
             >
               <BookOpen className="w-3.5 h-3.5" />
-              <span>Ensiklopedia Hayati</span>
+              <span>Pestisida Nabati</span>
             </button>
           </div>
         </div>
@@ -1141,7 +1141,7 @@ _Sawah Lestari Sehat Bebas Racun Kimia Semasa Panen_`;
             </div>
           )}
 
-          {/* Tab 3: Detailed Pest Catalog (Ensiklopedia OPT) */}
+          {/* Tab 3: Detailed Pest Catalog (Pestisida Nabati) */}
           {activeTab === 'ensiklopedia' && (
             <div className="animate-fade-in">
               <PestCatalog />

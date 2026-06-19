@@ -33,10 +33,12 @@ export interface OPTReport {
 export interface PestControlGuide {
   id: string;
   name: string;
+  localName?: string;
   scientificName: string;
   targetCrops: string[];
   symptoms: string[];
   imageUrl?: string;
+  imageUrls?: string[];
   biologicalControls: {
     title: string;
     description: string;
