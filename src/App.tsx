@@ -82,25 +82,196 @@ export default function App() {
     return match ? match[1] : url;
   };
 
+  // Client-Side CSV Parser & Normalizer fallback for serverless/static hosting environments (Vercel & GitHub Pages)
+  const clientParseCSV = (csvText: string): string[][] => {
+    const lines: string[][] = [];
+    let row: string[] = [];
+    let currentVal = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < csvText.length; i++) {
+      const char = csvText[i];
+      const nextChar = csvText[i + 1];
+      
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          currentVal += '"';
+          i++; // skip next double quote
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        row.push(currentVal.trim());
+        currentVal = '';
+      } else if ((char === '\r' || char === '\n') && !inQuotes) {
+        if (char === '\r' && nextChar === '\n') {
+          i++;
+        }
+        row.push(currentVal.trim());
+        lines.push(row);
+        row = [];
+        currentVal = '';
+      } else {
+        currentVal += char;
+      }
+    }
+    if (row.length > 0 || currentVal !== '') {
+      row.push(currentVal.trim());
+      lines.push(row);
+    }
+    return lines.filter(r => r.length > 0 && r.some(cell => cell !== ''));
+  };
+
+  const clientNormalizeRawRows = (rawRows: any[]): OPTReport[] => {
+    return rawRows.map((row: any, i: number) => {
+      const getVal = (possibleKeys: string[], fallbackVal: any = '') => {
+        for (const k of Object.keys(row)) {
+          const cleanK = k.toLowerCase().replace(/[\s_/()\-?:.]/g, '');
+          const matchClean = possibleKeys.some(pk => pk.toLowerCase().replace(/[\s_/()\-?:.]/g, '') === cleanK);
+          if (matchClean && row[k] !== undefined && row[k] !== null) {
+            return row[k];
+          }
+        }
+        return fallbackVal;
+      };
+
+      const locationVillageRaw = getVal(['LocationVillage', 'Desa', 'Kelurahan', 'locationVillage', 'DesaKelurahan', 'NamaDesa'], 'Nunbena');
+      let locationVillage = 'Nunbena';
+      let defaultLat = -9.7042;
+      let defaultLng = 124.2250;
+      
+      const vName = locationVillageRaw.toLowerCase().trim();
+      if (vName.includes('lillana') || vName.includes('lilana')) {
+        locationVillage = 'Lillana';
+        defaultLat = -9.7000;
+        defaultLng = 124.2180;
+      } else if (vName.includes('nunbena')) {
+        locationVillage = 'Nunbena';
+        defaultLat = -9.6600;
+        defaultLng = 124.2260;
+      } else if (vName.includes('taneotob')) {
+        locationVillage = 'Taneotob';
+        defaultLat = -9.7330;
+        defaultLng = 124.1700;
+      } else if (vName.includes('tunbes')) {
+        locationVillage = 'Tunbes';
+        defaultLat = -9.7000;
+        defaultLng = 124.2800;
+      } else if (vName.includes('noebesi')) {
+        locationVillage = 'Noebesi';
+        defaultLat = -9.6905;
+        defaultLng = 124.1640;
+      } else if (vName.includes('fetomone')) {
+        locationVillage = 'Fetomone';
+        defaultLat = -9.6605;
+        defaultLng = 124.1680;
+      } else {
+        locationVillage = locationVillageRaw;
+      }
+
+      const farmerName = getVal(['NamaPelapor', 'NamaPetani', 'Nama', 'Pelapor', 'farmerName', 'NamaLengkap', 'NamaLengkapPelapor'], `Petani Desa ${locationVillage}`);
+      const contact = getVal(['Contact', 'Kontak', 'NomorWA', 'NoWA', 'NoHP', 'WhatsApp', 'NoTelp', 'contact', 'NomorWhatsapp', 'NomorTelepon', 'NoHandphone', 'NoHpWa', 'nohpwa', 'nohp'], '');
+      const cropType = getVal(['CropType', 'Komoditas', 'Tanaman', 'JenisTanaman', 'cropType', 'JenisKomoditas'], 'Padi');
+      const pestName = getVal(['PestName', 'Hama', 'OPT', 'JenisHama', 'pestName', 'NamaHama', 'NamaOPT', 'HamaPenyakit', 'Kendal', 'Kendala', 'kendal', 'kendala'], 'Wereng Batang Cokelat');
+      const severity = getVal(['Severity', 'Intensitas', 'KategoriSerangan', 'severity', 'TingkatKeparahan', 'TingkatSerangan', 'Keparahan'], 'Sedang');
+      const affectedArea = parseFloat(getVal(['AffectedArea', 'LuasSerangan', 'LuasSeranganHa', 'LuasLahan', 'Luas', 'affectedArea', 'EstimasiLuasSeranganHa', 'EstimasiLuas', 'LuasSeranganHektar', 'LuasHektar'], '1.0'));
+      const description = getVal(['Description', 'Keterangan', 'DeskripsiGejala', 'Deskripsi', 'description', 'KeteranganTambahan', 'DeskripsiGejalaKeterangantambahan', 'FotoKondisi', 'fotokondisi'], 'Serangan OPT dilaporkan.');
+      const attackDate = getVal(['AttackDate', 'Tanggal', 'TanggalSerangan', 'date', 'attackDate', 'Timestamp', 'Waktu'], new Date().toISOString().split('T')[0]);
+      const statusValue = getVal(['Status', 'StatusLaporan', 'status'], 'Menunggu Verifikasi');
+      
+      const latRaw = getVal(['Latitude', 'Lintang', 'latitude'], '');
+      const lngRaw = getVal(['Longitude', 'Bujur', 'longitude'], '');
+      const lat = latRaw ? parseFloat(latRaw) : defaultLat;
+      const lng = lngRaw ? parseFloat(lngRaw) : defaultLng;
+
+      return {
+        id: getVal(['id', 'IDLaporan', 'ID', 'Id'], `REP-SHEET-${101 + i}`),
+        farmerName,
+        farmerGroup: getVal(['FarmerGroup', 'KelompokTani', 'farmerGroup', 'NamaKelompokTani', 'KelompokTeknis'], 'Maju Jaya'),
+        contact: contact.toString(),
+        cropType,
+        pestName,
+        severity: (['Ringan', 'Sedang', 'Berat', 'Puso'].includes(severity) ? severity : 'Sedang') as 'Ringan' | 'Sedang' | 'Berat' | 'Puso',
+        affectedArea: isNaN(affectedArea) ? 1.0 : affectedArea,
+        locationVillage,
+        locationDistrict: 'Nunbena',
+        latitude: isNaN(lat) ? defaultLat : lat,
+        longitude: isNaN(lng) ? defaultLng : lng,
+        attackDate: attackDate.split(' ')[0] || attackDate,
+        description,
+        status: (['Menunggu Verifikasi', 'Terverifikasi', 'Terkendali'].includes(statusValue) ? statusValue : 'Menunggu Verifikasi') as 'Menunggu Verifikasi' | 'Terverifikasi' | 'Terkendali',
+        pplNotes: getVal(['PplNotes', 'CatatanPPL', 'pplNotes'], ''),
+        pplVerifiedBy: getVal(['PplVerifiedBy', 'pplVerifiedBy'], ''),
+        pplVerifiedAt: getVal(['PplVerifiedAt', 'pplVerifiedAt'], ''),
+        poptActionTaken: getVal(['PoptActionTaken', 'TindakanPOPT', 'poptActionTaken'], ''),
+        poptControlledBy: getVal(['poptControlledBy', 'poptControlledBy'], ''),
+        poptControlledAt: getVal(['poptControlledAt', 'poptControlledAt'], ''),
+        createdAt: getVal(['CreatedAt', 'Timestamp', 'createdAt'], new Date().toISOString())
+      };
+    });
+  };
+
+  const fetchExternalReportsClientSideDirectly = async (sheetId: string) => {
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+    const csvResponse = await fetch(csvUrl);
+    if (!csvResponse.ok) {
+      throw new Error(`Direct CSV fetch returned status ${csvResponse.status}`);
+    }
+    const csvText = await csvResponse.text();
+    const csvRows = clientParseCSV(csvText);
+    if (csvRows.length < 1) {
+      throw new Error('Spreadsheet kosong atau tidak memiliki header.');
+    }
+    const headers = csvRows[0];
+    const dataRows = csvRows.slice(1);
+    const parsedCsvData = dataRows.map((row) => {
+      const rowObj: any = {};
+      headers.forEach((header, index) => {
+        rowObj[header] = row[index] !== undefined ? row[index] : '';
+      });
+      return rowObj;
+    });
+    return clientNormalizeRawRows(parsedCsvData);
+  };
+
   // Load and synchronize external records from Google Sheets Apps Script Web App
   const fetchExternalReports = async () => {
     setIsSyncing(true);
+    const sheetId = extractSheetId(googleSheetUrl);
     try {
-      const sheetId = extractSheetId(googleSheetUrl);
       const queryParams = new URLSearchParams({
         appsScriptUrl: appsScriptUrl.trim(),
         googleSheetId: sheetId.trim()
       });
-      const res = await fetch(`/api/external-reports?${queryParams.toString()}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && Array.isArray(data.reports)) {
-          setExternalReports(data.reports);
-          setSyncError(null);
-          setLastSyncedTime(new Date().toLocaleTimeString('id-ID'));
-        } else {
-          setSyncError(data.error || 'Terjadi kesalahan penafsiran kolom data oleh script.');
+      
+      let fetchedReports: OPTReport[] = [];
+      let success = false;
+      
+      // Try local Express /api proxy first
+      try {
+        const res = await fetch(`/api/external-reports?${queryParams.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.reports)) {
+            fetchedReports = data.reports;
+            success = true;
+          }
         }
+      } catch (apiErr) {
+        console.warn('API Proxy failed or is offline. Falling back to direct client-side spreadsheet connection...', apiErr);
+      }
+      
+      // FALLBACK: If Vercel or GitHub Pages is used, /api is a 404. We fetch the Google Sheet CSV directly!
+      if (!success) {
+        console.log('[SINGKAP CLIENT] Fetching direct GSheet CSV with fallback mechanism for ID:', sheetId);
+        fetchedReports = await fetchExternalReportsClientSideDirectly(sheetId);
+        success = true;
+      }
+      
+      if (success) {
+        setExternalReports(fetchedReports);
+        setSyncError(null);
+        setLastSyncedTime(new Date().toLocaleTimeString('id-ID'));
       } else {
         setSyncError('Koneksi server proxy Google Sheet bermasalah.');
       }
@@ -262,25 +433,47 @@ export default function App() {
 
   // Helper to submit response updates back to Sheets
   const handlePostReportUpdateToSheets = async (updated: OPTReport) => {
+    const payload = {
+      action: 'update_response',
+      appsScriptUrl: appsScriptUrl.trim(),
+      id: updated.id,
+      status: updated.status,
+      pplNotes: updated.pplNotes || '',
+      pplVerifiedBy: updated.pplVerifiedBy || '',
+      pplVerifiedAt: updated.pplVerifiedAt || '',
+      poptActionTaken: updated.poptActionTaken || '',
+      poptControlledBy: updated.poptControlledBy || '',
+      poptControlledAt: updated.poptControlledAt || ''
+    };
+
+    let success = false;
     try {
-      await fetch('/api/external-reports/submit', {
+      const res = await fetch('/api/external-reports/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'update_response',
-          appsScriptUrl: appsScriptUrl.trim(),
-          id: updated.id,
-          status: updated.status,
-          pplNotes: updated.pplNotes || '',
-          pplVerifiedBy: updated.pplVerifiedBy || '',
-          pplVerifiedAt: updated.pplVerifiedAt || '',
-          poptActionTaken: updated.poptActionTaken || '',
-          poptControlledBy: updated.poptControlledBy || '',
-          poptControlledAt: updated.poptControlledAt || ''
-        })
+        body: JSON.stringify(payload)
       });
+      if (res.ok) {
+        success = true;
+      }
     } catch (e) {
-      console.warn('Apps Script update proxy bypassed or returned error (offline fallback mode active):', e);
+      console.warn('API submission proxy failed or is offline. Falling back to direct client-to-script post...', e);
+    }
+
+    if (!success) {
+      try {
+        console.log('[SINGKAP CLIENT] Direct posting report update to script url:', appsScriptUrl);
+        await fetch(appsScriptUrl.trim(), {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+      } catch (directErr) {
+        console.error('Direct browser submission fell back or failed:', directErr);
+      }
     }
   };
 
@@ -302,22 +495,46 @@ export default function App() {
 
     setReports((prev) => [newReport, ...prev]);
 
-    // Fast-submit attempt to sheets if connected
+    const payload = { 
+      action: 'create_report', 
+      appsScriptUrl: appsScriptUrl.trim(),
+      ...newReport 
+    };
+
+    let success = false;
+    // Fast-submit attempt to sheets
     try {
-      await fetch('/api/external-reports/submit', {
+      const res = await fetch('/api/external-reports/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          action: 'create_report', 
-          appsScriptUrl: appsScriptUrl.trim(),
-          ...newReport 
-        })
+        body: JSON.stringify(payload)
       });
-      // reload sheets to load it instantly
-      fetchExternalReports();
-    } catch(err) {
-      console.warn('Local creation successful. Sheets synchronization bypassed.');
+      if (res.ok) {
+        success = true;
+      }
+    } catch (err) {
+      console.warn('API submission proxy failed. Falling back to direct client-to-script post...', err);
     }
+
+    if (!success) {
+      try {
+        console.log('[SINGKAP CLIENT] Direct posting new report to script url:', appsScriptUrl);
+        await fetch(appsScriptUrl.trim(), {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        success = true;
+      } catch (directErr) {
+        console.error('Direct browser submission failed:', directErr);
+      }
+    }
+
+    // reload sheets to load it instantly
+    setTimeout(fetchExternalReports, 1000);
 
     setActiveTab('dashboard'); // Redirect to dashboard to see on map
   };

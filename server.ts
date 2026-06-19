@@ -491,7 +491,7 @@ app.get('/api/external-reports', async (req, res) => {
   const clientAppsScriptUrl = typeof req.query.appsScriptUrl === 'string' ? req.query.appsScriptUrl : '';
   const clientGoogleSheetId = typeof req.query.googleSheetId === 'string' ? req.query.googleSheetId : '';
 
-  const appsScriptUrl = clientAppsScriptUrl || 'https://script.google.com/macros/s/AKfycbw_aG1Fr52DhwGalgTL-5bfW1Fwl-bKBTGIQ2i923SeLn6J5AHa0EazyMWGvtlBvYxSOQ/exec';
+  const appsScriptUrl = clientAppsScriptUrl || 'https://script.google.com/macros/s/AKfycbx-aKLTK6WuBkwo6dJjM6wMF8zHPyeQMeMCqzMR6XUSvMHILlxJMmI586WeqgI4SSEXyg/exec';
   const googleSheetId = clientGoogleSheetId || '1h_ULmL-gzwE6zHFk3ureyeRcl_NheM2f86-KH6eYHv8';
 
   // STRATEGY 1 (PRIMARY): Fetch directly from Google Sheets gviz CSV exporter
@@ -591,7 +591,7 @@ app.get('/api/external-reports', async (req, res) => {
 app.post('/api/external-reports/submit', async (req, res) => {
   try {
     const clientFormAppsScriptUrl = (req.body && typeof req.body.appsScriptUrl === 'string') ? req.body.appsScriptUrl : '';
-    const appsScriptUrl = clientFormAppsScriptUrl || 'https://script.google.com/macros/s/AKfycbw_aG1Fr52DhwGalgTL-5bfW1Fwl-bKBTGIQ2i923SeLn6J5AHa0EazyMWGvtlBvYxSOQ/exec';
+    const appsScriptUrl = clientFormAppsScriptUrl || 'https://script.google.com/macros/s/AKfycbx-aKLTK6WuBkwo6dJjM6wMF8zHPyeQMeMCqzMR6XUSvMHILlxJMmI586WeqgI4SSEXyg/exec';
     
     console.log('[SINGKAP API] Proxying submission to Google Sheets Apps Script:', req.body);
     const response = await fetch(appsScriptUrl, {
