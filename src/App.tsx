@@ -388,7 +388,7 @@ export default function App() {
   // Keep role state synchronized with login status
   const currentRole = isLoggedIn && currentUser ? currentUser.role : 'Petani';
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'lapor' | 'ensiklopedia' | 'lapor-popt'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'lapor' | 'ensiklopedia' | 'lapor-popt' | 'kontak-bpp'>('dashboard');
   const [showAddForm, setShowAddForm] = useState(false);
   const [showIntegrasiConfig, setShowIntegrasiConfig] = useState<boolean>(false);
   const [visitorCount, setVisitorCount] = useState<number | null>(null);
@@ -899,7 +899,7 @@ _Sawah Lestari Sehat Bebas Racun Kimia Semasa Panen_`;
           </div>
 
           {/* Quick tab switcher bar */}
-          <div className="flex border border-slate-200 rounded-xl overflow-hidden shadow-2xs font-bold text-xs bg-slate-50">
+          <div className="flex flex-wrap md:flex-nowrap border border-slate-200 rounded-xl overflow-hidden shadow-2xs font-bold text-xs bg-slate-50">
             <button
               onClick={() => setActiveTab('dashboard')}
               className={`px-4 py-2.5 flex items-center space-x-1.5 transition ${
@@ -938,6 +938,16 @@ _Sawah Lestari Sehat Bebas Racun Kimia Semasa Panen_`;
             >
               <Database className="w-3.5 h-3.5 text-emerald-500" />
               <span>Rekap Laporan</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('kontak-bpp')}
+              className={`px-4 py-2.5 flex items-center space-x-1.5 transition ${
+                activeTab === 'kontak-bpp' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5 text-rose-500" />
+              <span>Kontak Petugas BPP Nunbena</span>
             </button>
           </div>
         </div>
@@ -1187,260 +1197,432 @@ create table public.visitor_counts (
               />
 
               {/* Coordination logs list with role actions */}
-              <div id="reports-coordination-panel" className="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden">
-                <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50/50">
-                  <div>
-                    <h3 className="font-extrabold text-sm text-slate-800">Daftar Titik Sebaran Peta & Arus Kerja Lapangan</h3>
-                    <p className="text-[10px] text-slate-400 mt-0.5">Menunjukkan detail perbaikan, status tinjauan PPL, dan rekap pengendalian POPT.</p>
+                  <div id="reports-coordination-panel" className="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden">
+                    <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50/50">
+                      <div>
+                        <h3 className="font-extrabold text-sm text-slate-800">Daftar Titik Sebaran Peta & Arus Kerja Lapangan</h3>
+                        <p className="text-[10px] text-slate-400 mt-0.5">Menunjukkan detail perbaikan, status tinjauan PPL, dan rekap pengendalian POPT.</p>
+                      </div>
+
+                      {/* Search query field */}
+                      <div className="relative w-full sm:w-64">
+                        <Search className="w-3.8 h-3.8 absolute left-3 top-2.5 text-slate-400" />
+                        <input
+                          type="text"
+                          placeholder="Cari desa, hama, pengusul..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full text-xs pl-9 pr-3 py-2 rounded-xl border border-slate-250 focus:outline-none focus:ring-2 focus:ring-emerald-500/15"
+                        />
+                      </div>
+                    </div>
+
+                    {searchedReports.length === 0 ? (
+                      <div className="p-12 text-center text-slate-400 flex flex-col items-center justify-center space-y-2">
+                        <AlertCircle className="w-8 h-8 text-slate-300" />
+                        <p className="text-xs">Tidak ditemukan data laporan aktif untuk pencarian Anda.</p>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-slate-100">
+                        {searchedReports.map((report) => (
+                          <div key={report.id} id={`report-card-${report.id}`} className="p-5 hover:bg-slate-50/40 transition">
+                            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                              
+                              {/* Left: Metadata */}
+                              <div className="space-y-2 max-w-2xl">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  {/* Identification tag */}
+                                  <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md font-mono">{report.id}</span>
+                                  
+                                  {/* Severity badge */}
+                                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                                    report.severity === 'Puso' ? 'bg-red-100 text-red-800 border border-red-200' :
+                                    report.severity === 'Berat' ? 'bg-orange-100 text-orange-855 border border-orange-200' :
+                                    report.severity === 'Sedang' ? 'bg-amber-100 text-amber-855 border border-amber-200' :
+                                    'bg-green-100 text-green-800 border border-green-200'
+                                  }`}>
+                                    Intensitas: {report.severity}
+                                  </span>
+
+                                  {/* Target crops badge */}
+                                  <span className="bg-emerald-50 text-emerald-800 text-[9px] font-bold px-2 py-0.5 rounded-full border border-emerald-100">
+                                    🌾 {report.cropType}
+                                  </span>
+
+                                  {/* Status badge */}
+                                  <span className={`text-[9px] font-bold px-2.5 py-0.5 rounded-full ${
+                                    report.status === 'Terkendali' ? 'bg-sky-100 text-sky-850' :
+                                    report.status === 'Terverifikasi' ? 'bg-emerald-100 text-emerald-855 font-bold' :
+                                    'bg-amber-100 text-amber-855 font-bold animate-pulse'
+                                  }`}>
+                                    Status: {report.status}
+                                  </span>
+                                </div>
+
+                                <h4 className="text-sm font-extrabold text-slate-900">
+                                  Serangan Hama "{report.pestName}" di Desa {report.locationVillage} ({report.locationDistrict})
+                                </h4>
+
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1 text-[11px] text-slate-500 font-medium pt-1">
+                                  <span className="flex items-center gap-1">👤 Kelompok Tani: <strong className="text-slate-800">{report.farmerGroup}</strong></span>
+                                  <span className="flex items-center gap-1">📐 Luas Lahan: <strong className="text-slate-800">{report.affectedArea} Ha</strong></span>
+                                  <span className="flex items-center gap-1">📅 Pelaporan: <strong className="text-slate-800">{report.attackDate}</strong></span>
+                                  <span className="flex items-center gap-1">📞 Kontak: <span className="text-slate-600">{report.contact}</span></span>
+                                </div>
+
+                                <p className="text-xs text-slate-600 leading-relaxed bg-slate-50/50 p-3 rounded-xl border border-slate-100 italic">
+                                  "{report.description}"
+                                </p>
+
+                                {/* PPL Notes Display (if verified) */}
+                                {report.pplNotes && (
+                                  <div className="bg-emerald-50/30 border border-emerald-100/60 p-3.5 rounded-xl text-xs space-y-1">
+                                    <span className="text-[9px] font-extrabold text-emerald-700 uppercase tracking-wider block">🗣️ Advis Teknis Lapangan (Penyuluh PPL):</span>
+                                    <p className="text-slate-600 italic">"{report.pplNotes}"</p>
+                                    <span className="text-[9px] text-slate-400 block font-bold mt-1">Diverifikasi oleh: {report.pplVerifiedBy} • {new Date(report.pplVerifiedAt || '').toLocaleString('id-ID')}</span>
+                                  </div>
+                                )}
+
+                                {/* POPT Actions Display (if controlled) */}
+                                {report.poptActionTaken && (
+                                  <div className="bg-sky-50/30 border border-sky-100/60 p-3.5 rounded-xl text-xs space-y-1">
+                                    <span className="text-[9px] font-extrabold text-sky-700 uppercase tracking-wider block">🚨 Tindakan Pengendalian Hayati Terpadu (Petugas POPT):</span>
+                                    <p className="text-slate-600 font-semibold italic">"{report.poptActionTaken}"</p>
+                                    <span className="text-[9px] text-slate-400 block font-bold mt-1">Dicatat oleh: {report.poptControlledBy} • {new Date(report.poptControlledAt || '').toLocaleString('id-ID')}</span>
+                                  </div>
+                                )}
+
+                              </div>
+
+                              {/* Right: Responsive Actor Action Buttons based on User Role selection */}
+                              <div className="flex-shrink-0 flex flex-col gap-2 w-full lg:w-auto items-stretch lg:items-end">
+
+                                {/* Role PPL action options (for Menunggu Verifikasi status) */}
+                                {currentRole === 'PPL' && report.status === 'Menunggu Verifikasi' && (
+                                  <button
+                                    onClick={() => setSelectedReportIdForAction(selectedReportIdForAction === report.id ? null : report.id)}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] px-3 py-2 rounded-xl transition flex items-center justify-center space-x-1 shadow-xs"
+                                  >
+                                    <CheckCircle className="w-3.5 h-3.5" />
+                                    <span>Lakukan Verifikasi PPL</span>
+                                  </button>
+                                )}
+
+                                {/* Role POPT action options (for Terverifikasi status to controlled) */}
+                                {currentRole === 'POPT' && report.status === 'Terverifikasi' && (
+                                  <button
+                                    onClick={() => setSelectedReportIdForAction(selectedReportIdForAction === report.id ? null : report.id)}
+                                    className="bg-sky-600 hover:bg-sky-700 text-white font-bold text-[11px] px-3 py-2 rounded-xl transition flex items-center justify-center space-x-1 shadow-xs"
+                                  >
+                                    <ShieldCheck className="w-3.5 h-3.5" />
+                                    <span>Alokasikan Kendali POPT</span>
+                                  </button>
+                                )}
+
+                                {/* Informative Farmers view if waiting for check */}
+                                {currentRole === 'Petani' && report.status === 'Menunggu Verifikasi' && (
+                                  <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1.5 rounded-lg border border-amber-100/60 flex items-center justify-center gap-1 animate-pulse">
+                                    ⏳ Dialirkan ke PPL Nunbena
+                                  </span>
+                                )}
+                              </div>
+
+                            </div>
+
+                            {/* Inline Form Expanders for Actions */}
+                            {selectedReportIdForAction === report.id && (
+                              <div className="mt-4 p-4 rounded-2xl bg-slate-50 border border-slate-150 animate-fade-in text-xs max-w-xl">
+                                {currentRole === 'PPL' ? (
+                                  <form onSubmit={(e) => handleVerifyByPPL(report.id, e)} className="space-y-3">
+                                    <h5 className="font-extrabold text-slate-800">Verifikasi Amdal & Cetak Advis Rekomendasi (PPL)</h5>
+                                    
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <div>
+                                        <label className="block text-[9px] text-slate-500 font-bold mb-1">Nama Penyuluh (PPL) *</label>
+                                        <input
+                                          type="text"
+                                          required
+                                          placeholder="Nama lengkap & gelar..."
+                                          value={verifierName}
+                                          onChange={(e) => setVerifierName(e.target.value)}
+                                          className="w-full text-xs p-2 rounded-lg border border-slate-200 bg-white"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-[9px] text-slate-500 font-bold mb-1">PPL wilayah</label>
+                                        <input
+                                          type="text"
+                                          disabled
+                                          value="Kecamatan Nunbena"
+                                          className="w-full text-xs p-2 rounded-lg border border-slate-200 bg-slate-100 text-slate-500"
+                                        />
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <label className="block text-[9px] text-slate-500 font-bold mb-1">Rekomendasi / Catatan Pengendalian Hayati Lapangan *</label>
+                                      <textarea
+                                        required
+                                        rows={2.5}
+                                        placeholder="Instruksikan jenis agens hayati (e.g. Beauveria bassiana, parasitoid, dsb) atau ramuan pestisida organik nabati..."
+                                        value={validationText}
+                                        onChange={(e) => setValidationText(e.target.value)}
+                                        className="w-full text-xs p-2 rounded-lg border border-slate-200 bg-white"
+                                      />
+                                    </div>
+
+                                    <div className="flex justify-end space-x-2 pt-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => setSelectedReportIdForAction(null)}
+                                        className="px-3 py-1.5 bg-slate-200 text-slate-700 font-bold rounded-lg text-[10px]"
+                                      >
+                                        Batal
+                                      </button>
+                                      <button
+                                        type="submit"
+                                        className="px-3.5 py-1.5 bg-emerald-600 text-white font-bold rounded-lg text-[10px]"
+                                      >
+                                        Verifikasi & Beri Rekomendasi
+                                      </button>
+                                    </div>
+                                  </form>
+                                ) : currentRole === 'POPT' ? (
+                                  <form onSubmit={(e) => handleControlByPOPT(report.id, e)} className="space-y-3">
+                                    <h5 className="font-extrabold text-slate-800">Catat Tindakan Pengendalian Hayati & Selesaikan Serangan (POPT)</h5>
+                                    
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <div>
+                                        <label className="block text-[9px] text-slate-500 font-bold mb-1">Nama Petugas Pengendali OPT (POPT) *</label>
+                                        <input
+                                          type="text"
+                                          required
+                                          placeholder="Nama lengkap..."
+                                          value={officerName}
+                                          onChange={(e) => setOfficerName(e.target.value)}
+                                          className="w-full text-xs p-2 rounded-lg border border-slate-200 bg-white"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-[9px] text-slate-500 font-bold mb-1">Unit POPT</label>
+                                        <input
+                                          type="text"
+                                          disabled
+                                          value="Kabupaten Purbalingga"
+                                          className="w-full text-xs p-2 rounded-lg border border-slate-200 bg-slate-100 text-slate-500"
+                                        />
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <label className="block text-[9px] text-slate-500 font-bold mb-1">Bantuan Pengendalian / Tanggapan yang Diberikan *</label>
+                                      <textarea
+                                        required
+                                        rows={2.5}
+                                        placeholder="Tuliskan bantuan biologi yang disuplai atau aksi fisik (e.g. gropyokan tikus, pembagian agens hayati 10 liter, pelepasan musuh alami)..."
+                                        value={actionText}
+                                        onChange={(e) => setActionText(e.target.value)}
+                                        className="w-full text-xs p-2 rounded-lg border border-slate-200 bg-white"
+                                      />
+                                    </div>
+
+                                    <div className="flex justify-end space-x-2 pt-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => setSelectedReportIdForAction(null)}
+                                        className="px-3 py-1.5 bg-slate-200 text-slate-700 font-bold rounded-lg text-[10px]"
+                                      >
+                                        Batal
+                                      </button>
+                                      <button
+                                        type="submit"
+                                        className="px-3.5 py-1.5 bg-sky-600 text-white font-bold rounded-lg text-[10px]"
+                                      >
+                                        Tandai OPT Terkendali Selesai
+                                      </button>
+                                    </div>
+                                  </form>
+                                ) : null}
+                              </div>
+                            )}
+
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
-                  {/* Search query field */}
-                  <div className="relative w-full sm:w-64">
-                    <Search className="w-3.8 h-3.8 absolute left-3 top-2.5 text-slate-400" />
-                    <input
-                      type="text"
-                      placeholder="Cari desa, hama, pengusul..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full text-xs pl-9 pr-3 py-2 rounded-xl border border-slate-250 focus:outline-none focus:ring-2 focus:ring-emerald-500/15"
-                    />
+                {/* Hidden Right: BPP Officers Sidebar panel (now moved to a separate menu tab) */}
+                <div className="hidden">
+                  <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+                    {/* Header Area */}
+                    <div className="p-4 bg-gradient-to-r from-emerald-800 to-slate-900 text-white relative">
+                      <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                        <Users className="w-16 h-16" />
+                      </div>
+                      <div className="space-y-1 relative z-10">
+                        <span className="inline-block bg-emerald-500/20 text-emerald-300 text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded border border-emerald-500/30">
+                          BPP KECAMATAN NUNBENA
+                        </span>
+                        <h3 className="font-extrabold text-sm text-white">Kotak Kontak Petugas</h3>
+                        <p className="text-[10px] text-slate-300">Hubungi langsung nomor di bawah untuk pengawalan OPT cepat secara responsif.</p>
+                      </div>
+                    </div>
+
+                    {/* Directory List Area */}
+                    <div className="p-4 divide-y divide-slate-100 space-y-3.5">
+                      
+                      {/* Officer 1 */}
+                      <div className="flex items-start gap-3 pt-3.5 first:pt-0">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-rose-500 to-orange-400 font-black text-xs text-white flex items-center justify-center shrink-0 shadow-xs">
+                          YB
+                        </div>
+                        <div className="space-y-1 flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="text-[9px] font-black uppercase tracking-wider text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">
+                              Kepala BPP
+                            </span>
+                            <span className="flex items-center gap-0.5 text-[8px] font-bold text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded animate-pulse">
+                              <span className="w-1 h-1 rounded-full bg-emerald-500"></span> Siaga
+                            </span>
+                          </div>
+                          <h4 className="text-xs font-extrabold text-slate-800 truncate" title="Yoksi Z. Banamtuan, A.md">
+                            Yoksi Z. Banamtuan, A.md
+                          </h4>
+                          <p className="text-[10px] text-slate-500 font-mono flex items-center gap-1 font-semibold">
+                            <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+                            0852-5331-2956
+                          </p>
+                          
+                          <a
+                            href="https://wa.me/6285253312956?text=Halo%20Bapak%20Yoksi%20Z.%20Banamtuan%2C%20saya%20petani%20dari%20Kecamatan%20Nunbena%20ingin%20berkoordinasi%20mengenai%20laporan%20serangan%20OPT%20pada%20komoditi%20kami."
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center gap-1.5 w-full py-1.5 px-3 bg-emerald-650 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-extrabold transition shadow-3xs hover:scale-[1.02] active:scale-95"
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                            Hubungi WhatsApp
+                          </a>
+                        </div>
+                      </div>
+
+                      {/* Officer 2 */}
+                      <div className="flex items-start gap-3 pt-3.5">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-sky-500 to-indigo-500 font-black text-xs text-white flex items-center justify-center shrink-0 shadow-xs">
+                          GM
+                        </div>
+                        <div className="space-y-1 flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="text-[9px] font-black uppercase tracking-wider text-sky-600 bg-sky-50 px-1.5 py-0.5 rounded border border-sky-100">
+                              POPT Nunbena
+                            </span>
+                            <span className="flex items-center gap-0.5 text-[8px] font-bold text-sky-600 bg-sky-50 px-1 py-0.5 rounded">
+                              <span className="w-1 h-1 rounded-full bg-sky-500"></span> Aktif
+                            </span>
+                          </div>
+                          <h4 className="text-xs font-extrabold text-slate-800 truncate" title="George Missa, S.Si">
+                            George Missa, S.Si
+                          </h4>
+                          <p className="text-[10px] text-slate-500 font-mono flex items-center gap-1 font-semibold">
+                            <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+                            0822-3628-5503
+                          </p>
+                          
+                          <a
+                            href="https://wa.me/6282236285503?text=Halo%20Pak%20George%20Missa%2C%20saya%20petani%20dari%20Kecamatan%20Nunbena%20ingin%20berkoordinasi%20mengenai%20bantuan%20pengendalian%20hayati%20atau%20ramuan%20pestisida%20organik."
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center gap-1.5 w-full py-1.5 px-3 bg-emerald-650 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-extrabold transition shadow-3xs hover:scale-[1.02] active:scale-95"
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                            Hubungi WhatsApp
+                          </a>
+                        </div>
+                      </div>
+
+                      {/* Officer 3 */}
+                      <div className="flex items-start gap-3 pt-3.5">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 font-black text-xs text-white flex items-center justify-center shrink-0 shadow-xs">
+                          YN
+                        </div>
+                        <div className="space-y-1 flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="text-[9px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
+                              Penyuluh PPL
+                            </span>
+                            <span className="flex items-center gap-0.5 text-[8px] font-bold text-slate-500 bg-slate-50 px-1 py-0.5 rounded">
+                              Wilayah I
+                            </span>
+                          </div>
+                          <h4 className="text-xs font-extrabold text-slate-800 truncate" title="Yusak Neolaka">
+                            Yusak Neolaka
+                          </h4>
+                          <p className="text-[10px] text-slate-500 font-mono flex items-center gap-1 font-semibold">
+                            <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+                            0852-5306-7017
+                          </p>
+                          
+                          <a
+                            href="https://wa.me/6285253067017?text=Halo%20Bapak%20Yusak%20Neolaka%2C%20saya%20petani%20dari%20binaan%20Kecamatan%20Nunbena%20ingin%20berkoordinasi%20mengenai%20pengajuan%20dan%20verifikasi%20rekapitulasi%20serangan."
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center gap-1.5 w-full py-1.5 px-3 bg-emerald-650 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-extrabold transition shadow-3xs hover:scale-[1.02] active:scale-95"
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                            Hubungi WhatsApp
+                          </a>
+                        </div>
+                      </div>
+
+                      {/* Officer 4 */}
+                      <div className="flex items-start gap-3 pt-3.5">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 font-black text-xs text-white flex items-center justify-center shrink-0 shadow-xs">
+                          PB
+                        </div>
+                        <div className="space-y-1 flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="text-[9px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
+                              Penyuluh PPL
+                            </span>
+                            <span className="flex items-center gap-0.5 text-[8px] font-bold text-slate-500 bg-slate-50 px-1 py-0.5 rounded">
+                              Wilayah II
+                        </span>
+                          </div>
+                          <h4 className="text-xs font-extrabold text-slate-800 truncate" title="Petrus Agung Bili, S.P">
+                            Petrus Agung Bili, S.P
+                          </h4>
+                          <p className="text-[10px] text-slate-500 font-mono flex items-center gap-1 font-semibold">
+                            <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+                            0852-1499-7008
+                          </p>
+                          
+                          <a
+                            href="https://wa.me/6285214997008?text=Halo%20Bapak%20Petrus%20Agung%20Bili%2C%20saya%20petani%20dari%20binaan%20Kecamatan%20Nunbena%20ingin%20berkoordinasi%20mengenai%2520rekomendasi%20pembuatan%20organik%20pestisida."
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center gap-1.5 w-full py-1.5 px-3 bg-emerald-650 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-extrabold transition shadow-3xs hover:scale-[1.02] active:scale-95"
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                            Hubungi WhatsApp
+                          </a>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* BPP Information Brief Card */}
+                  <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl border border-slate-200 p-4 space-y-2">
+                    <h5 className="font-bold text-xs text-slate-800 flex items-center gap-1">
+                      <Sprout className="w-4 h-4 text-emerald-600" />
+                      Sinergi Satgas OPT
+                    </h5>
+                    <p className="text-[10.5px] text-slate-500 leading-normal">
+                      Balai Penyuluhan Pertanian (BPP) Nunbena memfasilitasi pengamatan rutin bersama para PPL dan POPT demi mencegah peledakan serangan hama makanan pokok.
+                    </p>
                   </div>
                 </div>
 
-                {searchedReports.length === 0 ? (
-                  <div className="p-12 text-center text-slate-400 flex flex-col items-center justify-center space-y-2">
-                    <AlertCircle className="w-8 h-8 text-slate-300" />
-                    <p className="text-xs">Tidak ditemukan data laporan aktif untuk pencarian Anda.</p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-slate-100">
-                    {searchedReports.map((report) => (
-                      <div key={report.id} id={`report-card-${report.id}`} className="p-5 hover:bg-slate-50/40 transition">
-                        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                          
-                          {/* Left: Metadata */}
-                          <div className="space-y-2 max-w-2xl">
-                            <div className="flex flex-wrap items-center gap-2">
-                              {/* Identification tag */}
-                              <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md font-mono">{report.id}</span>
-                              
-                              {/* Severity badge */}
-                              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                                report.severity === 'Puso' ? 'bg-red-100 text-red-800 border border-red-200' :
-                                report.severity === 'Berat' ? 'bg-orange-100 text-orange-855 border border-orange-200' :
-                                report.severity === 'Sedang' ? 'bg-amber-100 text-amber-855 border border-amber-200' :
-                                'bg-green-100 text-green-800 border border-green-200'
-                              }`}>
-                                Intensitas: {report.severity}
-                              </span>
-
-                              {/* Target crops badge */}
-                              <span className="bg-emerald-50 text-emerald-800 text-[9px] font-bold px-2 py-0.5 rounded-full border border-emerald-100">
-                                🌾 {report.cropType}
-                              </span>
-
-                              {/* Status badge */}
-                              <span className={`text-[9px] font-bold px-2.5 py-0.5 rounded-full ${
-                                report.status === 'Terkendali' ? 'bg-sky-100 text-sky-850' :
-                                report.status === 'Terverifikasi' ? 'bg-emerald-100 text-emerald-855 font-bold' :
-                                'bg-amber-100 text-amber-855 font-bold animate-pulse'
-                              }`}>
-                                Status: {report.status}
-                              </span>
-                            </div>
-
-                            <h4 className="text-sm font-extrabold text-slate-900">
-                              Serangan Hama "{report.pestName}" di Desa {report.locationVillage} ({report.locationDistrict})
-                            </h4>
-
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1 text-[11px] text-slate-500 font-medium pt-1">
-                              <span className="flex items-center gap-1">👤 Kelompok Tani: <strong className="text-slate-800">{report.farmerGroup}</strong></span>
-                              <span className="flex items-center gap-1">📐 Luas Lahan: <strong className="text-slate-800">{report.affectedArea} Ha</strong></span>
-                              <span className="flex items-center gap-1">📅 Pelaporan: <strong className="text-slate-800">{report.attackDate}</strong></span>
-                              <span className="flex items-center gap-1">📞 Kontak: <span className="text-slate-600">{report.contact}</span></span>
-                            </div>
-
-                            <p className="text-xs text-slate-600 leading-relaxed bg-slate-50/50 p-3 rounded-xl border border-slate-100 italic">
-                              "{report.description}"
-                            </p>
-
-                            {/* PPL Notes Display (if verified) */}
-                            {report.pplNotes && (
-                              <div className="bg-emerald-50/30 border border-emerald-100/60 p-3.5 rounded-xl text-xs space-y-1">
-                                <span className="text-[9px] font-extrabold text-emerald-700 uppercase tracking-wider block">🗣️ Advis Teknis Lapangan (Penyuluh PPL):</span>
-                                <p className="text-slate-600 italic">"{report.pplNotes}"</p>
-                                <span className="text-[9px] text-slate-400 block font-bold mt-1">Diverifikasi oleh: {report.pplVerifiedBy} • {new Date(report.pplVerifiedAt || '').toLocaleString('id-ID')}</span>
-                              </div>
-                            )}
-
-                            {/* POPT Actions Display (if controlled) */}
-                            {report.poptActionTaken && (
-                              <div className="bg-sky-50/30 border border-sky-100/60 p-3.5 rounded-xl text-xs space-y-1">
-                                <span className="text-[9px] font-extrabold text-sky-700 uppercase tracking-wider block">🚨 Tindakan Pengendalian Hayati Terpadu (Petugas POPT):</span>
-                                <p className="text-slate-600 font-semibold italic">"{report.poptActionTaken}"</p>
-                                <span className="text-[9px] text-slate-400 block font-bold mt-1">Dicatat oleh: {report.poptControlledBy} • {new Date(report.poptControlledAt || '').toLocaleString('id-ID')}</span>
-                              </div>
-                            )}
-
-                          </div>
-
-                          {/* Right: Responsive Actor Action Buttons based on User Role selection */}
-                          <div className="flex-shrink-0 flex flex-col gap-2 w-full lg:w-auto items-stretch lg:items-end">
-
-                            {/* Role PPL action options (for Menunggu Verifikasi status) */}
-                            {currentRole === 'PPL' && report.status === 'Menunggu Verifikasi' && (
-                              <button
-                                onClick={() => setSelectedReportIdForAction(selectedReportIdForAction === report.id ? null : report.id)}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] px-3 py-2 rounded-xl transition flex items-center justify-center space-x-1 shadow-xs"
-                              >
-                                <CheckCircle className="w-3.5 h-3.5" />
-                                <span>Lakukan Verifikasi PPL</span>
-                              </button>
-                            )}
-
-                            {/* Role POPT action options (for Terverifikasi status to controlled) */}
-                            {currentRole === 'POPT' && report.status === 'Terverifikasi' && (
-                              <button
-                                onClick={() => setSelectedReportIdForAction(selectedReportIdForAction === report.id ? null : report.id)}
-                                className="bg-sky-600 hover:bg-sky-700 text-white font-bold text-[11px] px-3 py-2 rounded-xl transition flex items-center justify-center space-x-1 shadow-xs"
-                              >
-                                <ShieldCheck className="w-3.5 h-3.5" />
-                                <span>Alokasikan Kendali POPT</span>
-                              </button>
-                            )}
-
-                            {/* Informative Farmers view if waiting for check */}
-                            {currentRole === 'Petani' && report.status === 'Menunggu Verifikasi' && (
-                              <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1.5 rounded-lg border border-amber-100/60 flex items-center justify-center gap-1 animate-pulse">
-                                ⏳ Dialirkan ke PPL Nunbena
-                              </span>
-                            )}
-                          </div>
-
-                        </div>
-
-                        {/* Inline Form Expanders for Actions */}
-                        {selectedReportIdForAction === report.id && (
-                          <div className="mt-4 p-4 rounded-2xl bg-slate-50 border border-slate-150 animate-fade-in text-xs max-w-xl">
-                            {currentRole === 'PPL' ? (
-                              <form onSubmit={(e) => handleVerifyByPPL(report.id, e)} className="space-y-3">
-                                <h5 className="font-extrabold text-slate-800">Verifikasi Amdal & Cetak Advis Rekomendasi (PPL)</h5>
-                                
-                                <div className="grid grid-cols-2 gap-2">
-                                  <div>
-                                    <label className="block text-[9px] text-slate-500 font-bold mb-1">Nama Penyuluh (PPL) *</label>
-                                    <input
-                                      type="text"
-                                      required
-                                      placeholder="Nama lengkap & gelar..."
-                                      value={verifierName}
-                                      onChange={(e) => setVerifierName(e.target.value)}
-                                      className="w-full text-xs p-2 rounded-lg border border-slate-200 bg-white"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="block text-[9px] text-slate-500 font-bold mb-1">PPL wilayah</label>
-                                    <input
-                                      type="text"
-                                      disabled
-                                      value="Kecamatan Nunbena"
-                                      className="w-full text-xs p-2 rounded-lg border border-slate-200 bg-slate-100 text-slate-500"
-                                    />
-                                  </div>
-                                </div>
-
-                                <div>
-                                  <label className="block text-[9px] text-slate-500 font-bold mb-1">Rekomendasi / Catatan Pengendalian Hayati Lapangan *</label>
-                                  <textarea
-                                    required
-                                    rows={2.5}
-                                    placeholder="Instruksikan jenis agens hayati (e.g. Beauveria bassiana, parasitoid, dsb) atau ramuan pestisida organik nabati..."
-                                    value={validationText}
-                                    onChange={(e) => setValidationText(e.target.value)}
-                                    className="w-full text-xs p-2 rounded-lg border border-slate-200 bg-white"
-                                  />
-                                </div>
-
-                                <div className="flex justify-end space-x-2 pt-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => setSelectedReportIdForAction(null)}
-                                    className="px-3 py-1.5 bg-slate-200 text-slate-700 font-bold rounded-lg text-[10px]"
-                                  >
-                                    Batal
-                                  </button>
-                                  <button
-                                    type="submit"
-                                    className="px-3.5 py-1.5 bg-emerald-600 text-white font-bold rounded-lg text-[10px]"
-                                  >
-                                    Verifikasi & Beri Rekomendasi
-                                  </button>
-                                </div>
-                              </form>
-                            ) : currentRole === 'POPT' ? (
-                              <form onSubmit={(e) => handleControlByPOPT(report.id, e)} className="space-y-3">
-                                <h5 className="font-extrabold text-slate-800">Catat Tindakan Pengendalian Hayati & Selesaikan Serangan (POPT)</h5>
-                                
-                                <div className="grid grid-cols-2 gap-2">
-                                  <div>
-                                    <label className="block text-[9px] text-slate-500 font-bold mb-1">Nama Petugas Pengendali OPT (POPT) *</label>
-                                    <input
-                                      type="text"
-                                      required
-                                      placeholder="Nama lengkap..."
-                                      value={officerName}
-                                      onChange={(e) => setOfficerName(e.target.value)}
-                                      className="w-full text-xs p-2 rounded-lg border border-slate-200 bg-white"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="block text-[9px] text-slate-500 font-bold mb-1">Unit POPT</label>
-                                    <input
-                                      type="text"
-                                      disabled
-                                      value="Kabupaten Purbalingga"
-                                      className="w-full text-xs p-2 rounded-lg border border-slate-200 bg-slate-100 text-slate-500"
-                                    />
-                                  </div>
-                                </div>
-
-                                <div>
-                                  <label className="block text-[9px] text-slate-500 font-bold mb-1">Bantuan Pengendalian / Tanggapan yang Diberikan *</label>
-                                  <textarea
-                                    required
-                                    rows={2.5}
-                                    placeholder="Tuliskan bantuan biologi yang disuplai atau aksi fisik (e.g. gropyokan tikus, pembagian agens hayati 10 liter, pelepasan musuh alami)..."
-                                    value={actionText}
-                                    onChange={(e) => setActionText(e.target.value)}
-                                    className="w-full text-xs p-2 rounded-lg border border-slate-200 bg-white"
-                                  />
-                                </div>
-
-                                <div className="flex justify-end space-x-2 pt-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => setSelectedReportIdForAction(null)}
-                                    className="px-3 py-1.5 bg-slate-200 text-slate-700 font-bold rounded-lg text-[10px]"
-                                  >
-                                    Batal
-                                  </button>
-                                  <button
-                                    type="submit"
-                                    className="px-3.5 py-1.5 bg-sky-600 text-white font-bold rounded-lg text-[10px]"
-                                  >
-                                    Tandai OPT Terkendali Selesai
-                                  </button>
-                                </div>
-                              </form>
-                            ) : null}
-                          </div>
-                        )}
-
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
             </div>
           )}
 
@@ -1500,132 +1682,364 @@ create table public.visitor_counts (
             </div>
           )}
 
-          {/* Tab 5: Lapor Petugas POPT (Google Form Embedded with configuration fallback) */}
+          {/* Tab 5: Lapor Petugas POPT (Beautiful focused custom CTA design) */}
           {activeTab === 'lapor-popt' && (
-            <div className="max-w-5xl mx-auto animate-fade-in space-y-6">
-              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
+            <div className="max-w-3xl mx-auto animate-fade-in space-y-6 text-left">
+              <div className="bg-white rounded-3xl border border-slate-200/95 shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl">
                 
-                {/* Visual Header */}
-                <div className="p-5 border-b border-slate-100 bg-gradient-to-r from-sky-800 to-sky-600 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                  <div className="space-y-1 block text-left">
-                    <h3 className="font-extrabold text-sm flex items-center gap-2">
-                       <ShieldCheck className="w-5 h-5 text-sky-200" />
-                       Laporan Aksi Petugas Pengendali OPT (POPT)
-                    </h3>
-                    <p className="text-[11px] text-sky-100 max-w-xl text-left">
-                       Media pelaporan aktivitas pemantauan, gropyokan, distribusi agens hayati, dan pelepasan musuh alami oleh Petugas POPT Lapangan.
+                {/* Modern Hero Header Banner inside Card */}
+                <div className="bg-gradient-to-br from-emerald-800 via-emerald-950 to-slate-900 text-white p-8 md:p-10 relative overflow-hidden">
+                  <div className="absolute -top-12 -right-12 p-8 opacity-10 pointer-events-none select-none">
+                    <FileText className="w-64 h-64 rotate-12 text-slate-200" />
+                  </div>
+                  <div className="absolute top-1/2 left-3/4 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                  <div className="relative z-10 space-y-3.5">
+                    <span className="inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-emerald-500/30">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      Sistem Pelaporan POPT Terpadu
+                    </span>
+                    <h2 className="text-2xl md:text-3xl font-black tracking-tight leading-tight">
+                      Formulir Laporan Petugas Pengendali OPT
+                    </h2>
+                    <p className="text-xs md:text-sm text-slate-300 max-w-xl leading-relaxed">
+                      Saluran resmi khusus Petugas Pengamat Hama (POPT) Kecamatan Nunbena untuk mendokumentasikan aksi taksasi serangan harian, kegiatan gropyokan, rilis agens hayati, serta peredaman kepungan hama di lapangan.
                     </p>
                   </div>
-                  
-                  {/* Dynamic Customizer for Google Form URL */}
-                  <div className="bg-sky-900/45 p-2.5 rounded-xl border border-sky-500/20 w-full md:w-auto">
-                    <label className="block text-[9px] font-black tracking-wider text-sky-200 uppercase mb-1 text-left">
-                      Kustomisasi URL Google Form:
-                    </label>
-                    <div className="flex gap-1.5">
-                      <input
-                        type="text"
-                        value={googleFormUrl}
-                        onChange={(e) => {
-                          setGoogleFormUrl(e.target.value);
-                          localStorage.setItem('singkap_opt_google_form', e.target.value);
-                        }}
-                        placeholder="Tempel link Google Form di sini..."
-                        className="text-xs px-2.5 py-1.5 rounded-lg bg-white text-slate-800 border-none outline-none focus:ring-2 focus:ring-emerald-500 w-full md:w-64"
-                      />
-                      <button
-                        onClick={() => {
-                          const fallback = 'https://forms.gle/8vbKDXJdxTYBe4ou6';
-                          setGoogleFormUrl(fallback);
-                          localStorage.setItem('singkap_opt_google_form', fallback);
-                        }}
-                        className="px-2.5 py-1.5 text-[10px] font-bold bg-white/20 hover:bg-white/30 text-white rounded-lg transition"
-                        title="Kembalikan ke form bawaan"
-                      >
-                        Reset
-                      </button>
-                    </div>
-                  </div>
                 </div>
 
-                {/* Integration Notice Bar */}
-                <div className="bg-sky-50 border-b border-sky-100/70 p-4 text-[11px] text-sky-950 flex items-start gap-2.5 leading-relaxed text-left">
-                  <AlertCircle className="w-4.5 h-4.5 text-sky-700 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-extrabold text-sky-900 block mb-0.5">💡 Informasi Integrasi Google Form:</span>
-                    Halaman ini menampilkan form pelunasan laporan POPT dari Kelompok Tani secara langsung. Secara default, link diatur ke <strong className="text-sky-900 font-bold">https://forms.gle/8vbKDXJdxTYBe4ou6</strong>.
-                  </div>
-                </div>
-
-                {/* Main Embed Area */}
-                <div className="relative w-full min-h-[550px] bg-slate-50 flex flex-col justify-center items-center">
-                  {googleFormUrl.includes('forms.gle') ? (
-                    <div className="p-8 text-center max-w-xl space-y-5 flex flex-col items-center">
-                      <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center border border-emerald-100">
-                        <FileText className="w-8 h-8" />
-                      </div>
-                      
-                      <div className="space-y-2 text-center">
-                        <h4 className="text-sm font-extrabold text-slate-805">Formulir Laporan Petugas POPT Aktif</h4>
-                        <p className="text-xs text-slate-500 leading-relaxed">
-                          Anda sedang menggunakan tautan resmi <code className="bg-slate-100 p-1 rounded font-mono text-emerald-700 text-[11px] break-all">{googleFormUrl}</code>. 
-                        </p>
-                        <p className="text-xs text-slate-500 leading-relaxed">
-                          Google membatasi pembukaan tautan pendek (<code className="bg-slate-100 px-1 py-0.5 rounded text-[11px]">forms.gle</code>) langsung di dalam bingkai aplikasi (iframe) demi privasi pengguna dan mencegah kesalahan <em>"Maaf, file yang Anda minta tidak ada"</em>.
-                        </p>
-                      </div>
-
-                      <div className="py-2">
-                        <a
-                          href={googleFormUrl}
-                          target="_blank"
-                          referrerPolicy="no-referrer"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-6 py-3.5 rounded-xl transition shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 text-xs text-center"
-                        >
-                          <span>Buka & Isi Formulir Sekarang ↗</span>
-                        </a>
-                      </div>
-
-                      <div className="border-t border-slate-200/80 pt-4 w-full text-left space-y-2 text-[11px] text-slate-500 leading-relaxed">
-                        <span className="font-bold text-slate-700 block text-xs">💡 Tips Menyematkan Google Form dalam Halaman Ini:</span>
-                        <p>Jika Anda ingin form tersebut tampil utuh di halaman ini tanpa perlu membuka tab baru, gunakan link sematan panjang:</p>
-                        <ol className="list-decimal pl-4.5 space-y-1 block">
-                          <li>Buka form Anda di Google Forms editor.</li>
-                          <li>Klik tombol <strong className="text-slate-700">Kirim</strong> di sudut kanan atas.</li>
-                          <li>Pilih ikon sematan <strong className="text-slate-700 font-mono">&lt; &gt;</strong>.</li>
-                          <li>Salin bagian URL di dalam tanda kutip atribut <code className="bg-slate-150 px-1 rounded text-red-700 font-mono">src="..."</code> (misalnya yang diawali dengan <code className="bg-slate-150 px-1 rounded text-slate-600 font-mono text-[10px]">https://docs.google.com/forms/d/e/...</code>).</li>
-                          <li>Tempel link tersebut pada input <strong className="text-slate-700">Kustomisasi URL</strong> di atas.</li>
-                        </ol>
-                      </div>
-                    </div>
-                  ) : (
-                    <iframe
-                      src={googleFormUrl}
-                      className="w-full h-[650px] border-0"
-                      allow="geolocation"
-                      title="Google Form Lapor Petugas POPT"
-                    >
-                      Memuat Google Form...
-                    </iframe>
-                  )}
+                {/* Highly Attractive Call-to-Action Content Section */}
+                <div className="p-8 md:p-12 flex flex-col items-center justify-center text-center space-y-8">
                   
-                  {/* Footer link to directly open if iframe is restricted or sandboxed */}
-                  <div className="p-3.5 bg-slate-100 border-t border-slate-200/60 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-slate-500 w-full mt-auto">
-                    <span>Butuh tautan luar langsung untuk dibagikan ke lapangan?</span>
+                  {/* Decorative Icon Circle with Sparkles & Live Pulsing Effects */}
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-emerald-500/10 rounded-full scale-135 animate-ping opacity-50"></div>
+                    <div className="absolute -top-1.5 -right-1.5 bg-amber-400 text-amber-950 p-1.5 rounded-full shadow-md animate-bounce">
+                      <Sparkles className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="relative w-20 h-20 bg-gradient-to-br from-emerald-50 to-teal-100 rounded-3xl border border-emerald-100 flex items-center justify-center shadow-inner">
+                      <FileText className="w-10 h-10 text-emerald-800" />
+                    </div>
+                  </div>
+
+                  {/* Clean Message / Heading */}
+                  <div className="space-y-2.5 max-w-lg">
+                    <h3 className="text-xl font-extrabold text-slate-800">
+                      Satu Tombol untuk Akses Cepat
+                    </h3>
+                    <p className="text-xs md:text-sm text-slate-500 leading-relaxed font-semibold">
+                      Guna kelancaran pelaporan dari lapangan, formulir pengisian data diarahkan langsung ke Google Form resmi BPP. Silakan tekan tombol lapor di bawah untuk melengkapi laporan.
+                    </p>
+                  </div>
+
+                  {/* THE MAIN ACTION BUTTON: Super Attractive, Polished, Hover & Click scale effects */}
+                  <div className="w-full max-w-md py-2">
                     <a
                       href={googleFormUrl}
                       target="_blank"
                       referrerPolicy="no-referrer"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-900 text-white font-bold px-3.5 py-1.5 rounded-lg transition text-[11px]"
+                      className="group relative flex items-center justify-center gap-3 w-full py-5 px-8 bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-700 hover:from-emerald-700 hover:via-emerald-850 hover:to-teal-800 text-white rounded-2xl text-xs md:text-sm font-black uppercase tracking-wider transition-all duration-300 shadow-lg hover:shadow-emerald-500/25 shadow-emerald-600/15 hover:scale-[1.015] active:scale-[0.985] outline-none focus:ring-4 focus:ring-emerald-500/30"
                     >
-                      Buka Form di Tab Baru ↗
+                      <span className="absolute inset-0 w-full h-full rounded-2xl bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                      
+                      <FileText className="w-5 h-5 text-emerald-200 transition-transform group-hover:scale-110" />
+                      <span>Lapor Petugas (Google Form)</span>
+                      <ExternalLink className="w-4 h-4 text-white/80 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                     </a>
+                    
+                    {/* Active Link Footnote */}
+                    <div className="mt-3.5 flex items-center justify-center gap-1.5 text-[11px] text-slate-400 font-medium font-sans">
+                      <span>Tautan aktif saat ini:</span>
+                      <code className="bg-slate-50 px-2 py-0.5 rounded border border-slate-100 font-mono text-slate-600 select-all max-w-[280px] truncate" title={googleFormUrl}>
+                        {googleFormUrl}
+                      </code>
+                    </div>
+                  </div>
+
+                  {/* Flow Steps Segment for Visual Completeness */}
+                  <div className="w-full border-t border-slate-100 pt-8 mt-4 grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
+                    
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-800 font-black text-xs flex items-center justify-center shrink-0">
+                        1
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider">Isi Google Form</h4>
+                        <p className="text-[11px] text-slate-500 leading-normal font-medium">
+                          Masukkan data real-time, foto serangan lapangan, koordinat desa, dan dosis agens hayati.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-800 font-black text-xs flex items-center justify-center shrink-0">
+                        2
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider">Kirim Laporan</h4>
+                        <p className="text-[11px] text-slate-500 leading-normal font-medium">
+                          Tekan kirim pada Google Form untuk mengunci data Anda langsung di pelayan rekaman awan.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-800 font-black text-xs flex items-center justify-center shrink-0">
+                        3
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider">Verifikasi BPP</h4>
+                        <p className="text-[11px] text-slate-500 leading-normal font-medium">
+                          Kepala BPP dan Tim Penyuluh akan memantau entri guna penyiapan stimulan pestisida organik segera.
+                        </p>
+                      </div>
+                    </div>
+
+                  </div>
+
+                </div>
+
+                {/* Sub-Card Config Area (Compact and hidden in simple views, but clean & accessible for configuration) */}
+                <div className="bg-slate-50 border-t border-slate-100 p-4 px-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-slate-500">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Ingin ganti atau update link Google Form tujuan?</span>
+                  </div>
+                  
+                  {/* Subtle popover/input for administrator */}
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <input
+                      type="text"
+                      value={googleFormUrl}
+                      onChange={(e) => {
+                        setGoogleFormUrl(e.target.value);
+                        localStorage.setItem('singkap_opt_google_form', e.target.value);
+                      }}
+                      placeholder="Tempel link formulir baru..."
+                      className="text-[11px] px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-705 focus:outline-none focus:border-emerald-500 w-full sm:w-56"
+                    />
+                    <button
+                      onClick={() => {
+                        const fallback = 'https://forms.gle/8vbKDXJdxTYBe4ou6';
+                        setGoogleFormUrl(fallback);
+                        localStorage.setItem('singkap_opt_google_form', fallback);
+                      }}
+                      className="px-2.5 py-1.5 text-[10px] font-bold bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg transition shrink-0"
+                    >
+                      Reset
+                    </button>
                   </div>
                 </div>
 
               </div>
+            </div>
+          )}
+
+          {/* Tab: Kontak Petugas BPP Nunbena */}
+          {activeTab === 'kontak-bpp' && (
+            <div className="max-w-6xl mx-auto animate-fade-in space-y-8 text-left">
+              
+              {/* Header Banner */}
+              <div className="bg-gradient-to-r from-emerald-800 via-emerald-950 to-slate-900 text-white rounded-3xl p-8 shadow-md relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                  <Users className="w-48 h-48 animate-pulse" />
+                </div>
+                <div className="relative z-10 space-y-3">
+                  <span className="inline-block bg-emerald-500/20 text-emerald-300 text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full border border-emerald-500/30">
+                    BPP KECAMATAN NUNBENA
+                  </span>
+                  <h2 className="text-2xl md:text-3xl font-black tracking-tight">Kotak Kontak Petugas BPP Nunbena</h2>
+                  <p className="text-sm text-slate-300 max-w-2xl leading-relaxed">
+                    Hubungi langsung kontak tim penyuluh (PPL) dan pengendali (POPT) di bawah ini untuk pengawalan terpadu, rilis agens hayati, bantuan darurat, dan koordinasi cepat penanganan serangan hama di Nunbena.
+                  </p>
+                </div>
+              </div>
+
+              {/* Grid map/directory */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Officer 1 */}
+                <div className="bg-white rounded-3xl border border-slate-200/85 hover:border-emerald-500/30 shadow-xs hover:shadow-md transition duration-300 p-6 flex flex-col justify-between space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-rose-500 to-orange-400 font-extrabold text-white flex items-center justify-center shrink-0 shadow-xs">
+                      YB
+                    </div>
+                    <div className="space-y-1.5 flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-100">
+                          Kepala BPP
+                        </span>
+                        <span className="flex items-center gap-1 text-[9px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded animate-pulse">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Siaga Layanan
+                        </span>
+                      </div>
+                      <h3 className="text-base font-extrabold text-slate-800" title="Yoksi Z. Banamtuan, A.md">
+                        Yoksi Z. Banamtuan, A.md (Kepala BPP)
+                      </h3>
+                      <p className="text-xs text-slate-500 leading-normal font-medium">
+                        Bertanggung jawab atas koordinasi pengamatan, kebijakan mitigasi OPT tingkat kecamatan, dan perumusan stimulan bantuan tani.
+                      </p>
+                      <p className="text-xs text-slate-700 font-mono flex items-center gap-1.5 font-bold pt-1">
+                        <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        0852-5331-2956
+                      </p>
+                    </div>
+                  </div>
+                  <a
+                    href="https://wa.me/6285253312956?text=Halo%20Bapak%20Yoksi%20Z.%20Banamtuan%2C%20saya%20petani%20dari%20Kecamatan%20Nunbena%20ingin%20berkoordinasi%20mengenai%20laporan%20serangan%20OPT%20pada%20komoditi%20kami."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold transition shadow-3xs hover:scale-[1.01] active:scale-95"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    Hubungi Via WhatsApp (Kepala BPP)
+                  </a>
+                </div>
+
+                {/* Officer 2 */}
+                <div className="bg-white rounded-3xl border border-slate-200/85 hover:border-emerald-500/30 shadow-xs hover:shadow-md transition duration-300 p-6 flex flex-col justify-between space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-sky-500 to-indigo-500 font-extrabold text-white flex items-center justify-center shrink-0 shadow-xs">
+                      GM
+                    </div>
+                    <div className="space-y-1.5 flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-sky-600 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">
+                          POPT Kecamatan
+                        </span>
+                        <span className="flex items-center gap-1 text-[9px] font-extrabold text-sky-600 bg-sky-50 px-2 py-0.5 rounded">
+                          <span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span> Pengamat Aktif
+                        </span>
+                      </div>
+                      <h3 className="text-base font-extrabold text-slate-800" title="George Missa, S.Si">
+                        George Missa, S.Si (POPT)
+                      </h3>
+                      <p className="text-xs text-slate-500 leading-normal font-medium">
+                        Spesialis proteksi tanaman. Melakukan diagnosis klinis jenis organisme pengganggu, simulasi ramuan hayati pestisida, dan pembagian agen pengendali hayati.
+                      </p>
+                      <p className="text-xs text-slate-700 font-mono flex items-center gap-1.5 font-bold pt-1">
+                        <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        0822-3628-5503
+                      </p>
+                    </div>
+                  </div>
+                  <a
+                    href="https://wa.me/6282236285503?text=Halo%20Pak%20George%20Missa%2C%20saya%20petani%20dari%20Kecamatan%20Nunbena%20ingin%20berkoordinasi%20mengenai%20bantuan%20pengendalian%20hayati%20atau%20ramuan%20pestisida%20organik."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold transition shadow-3xs hover:scale-[1.01] active:scale-95"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    Hubungi Via WhatsApp (POPT)
+                  </a>
+                </div>
+
+                {/* Officer 3 */}
+                <div className="bg-white rounded-3xl border border-slate-200/85 hover:border-emerald-500/30 shadow-xs hover:shadow-md transition duration-300 p-6 flex flex-col justify-between space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 font-extrabold text-white flex items-center justify-center shrink-0 shadow-xs">
+                      YN
+                    </div>
+                    <div className="space-y-1.5 flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
+                          Penyuluh PPL Wilayah I
+                        </span>
+                      </div>
+                      <h3 className="text-base font-extrabold text-slate-800" title="Yusak Neolaka">
+                        Yusak Neolaka (PPL)
+                      </h3>
+                      <p className="text-xs text-slate-500 leading-normal font-medium">
+                        Pendampingan Kelompok Tani binaan Wilayah I Nunbena. Hubungi untuk pencatatan sensus kerusakan, pengusulan stimulan, dan bimbingan lapangan.
+                      </p>
+                      <p className="text-xs text-slate-700 font-mono flex items-center gap-1.5 font-bold pt-1">
+                        <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        0852-5306-7017
+                      </p>
+                    </div>
+                  </div>
+                  <a
+                    href="https://wa.me/6285253067017?text=Halo%20Bapak%20Yusak%20Neolaka%2C%20saya%20petani%20dari%20binaan%20Kecamatan%20Nunbena%20ingin%20berkoordinasi%20mengenai%20pengajuan%20dan%20verifikasi%20rekapitulasi%20serangan."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold transition shadow-3xs hover:scale-[1.01] active:scale-95"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    Hubungi Via WhatsApp (PPL Wilayah I)
+                  </a>
+                </div>
+
+                {/* Officer 4 */}
+                <div className="bg-white rounded-3xl border border-slate-200/85 hover:border-emerald-500/30 shadow-xs hover:shadow-md transition duration-300 p-6 flex flex-col justify-between space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 font-extrabold text-white flex items-center justify-center shrink-0 shadow-xs">
+                      PB
+                    </div>
+                    <div className="space-y-1.5 flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
+                          Penyuluh PPL Wilayah II
+                        </span>
+                      </div>
+                      <h3 className="text-base font-extrabold text-slate-800" title="Petrus Agung Bili, S.P">
+                        Petrus Agung Bili, S.P (PPL)
+                      </h3>
+                      <p className="text-xs text-slate-500 leading-normal font-medium">
+                        Pendampingan Kelompok Tani binaan Wilayah II Nunbena. Sila hubungi untuk advis pembuatan pupuk organik mandiri, racikan agens nabati, dan sensus aduan.
+                      </p>
+                      <p className="text-xs text-slate-700 font-mono flex items-center gap-1.5 font-bold pt-1">
+                        <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        0852-1499-7008
+                      </p>
+                    </div>
+                  </div>
+                  <a
+                    href="https://wa.me/6285214997008?text=Halo%20Bapak%20Petrus%20Agung%20Bili%2C%20saya%20petani%20dari%20binaan%20Kecamatan%20Nunbena%20ingin%20berkoordinasi%20mengenai%2520rekomendasi%20pembuatan%20organik%20pestisida."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold transition shadow-3xs hover:scale-[1.01] active:scale-95"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    Hubungi Via WhatsApp (PPL Wilayah II)
+                  </a>
+                </div>
+
+              </div>
+
+              {/* Informative Grid Row */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+                <div className="bg-gradient-to-br from-emerald-50 to-teal-50/50 rounded-2xl border border-emerald-100 p-5 space-y-2.5">
+                  <div className="p-2 w-10 h-10 bg-emerald-100 text-emerald-800 rounded-xl flex items-center justify-center">
+                    <Sprout className="w-5 h-5 font-black" />
+                  </div>
+                  <h4 className="font-extrabold text-xs text-slate-800 uppercase tracking-wider">Sinergi Satgas OPT</h4>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Balai Penyuluhan Pertanian (BPP) Nunbena memfasilitasi pengamatan rutin harian berkolaborasi dengan PPL dan petugas POPT guna menahan peledakan intensitas serangan hama pangan krusial.
+                  </p>
+                </div>
+
+                <div className="bg-gradient-to-br from-sky-50 to-indigo-50/50 rounded-2xl border border-sky-100 p-5 space-y-2.5">
+                  <div className="p-2 w-10 h-10 bg-sky-100 text-sky-850 rounded-xl flex items-center justify-center">
+                    <ShieldCheck className="w-5 h-5 font-black" />
+                  </div>
+                  <h4 className="font-extrabold text-xs text-slate-800 uppercase tracking-wider">Pengawalan Hayati</h4>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Dukungan penyediaan agen hayati (seperti jamur Beauveria bassiana, Thrichoderma, parasitoid telur, dsb) secara gratis terverifikasi untuk mengembalikan keseimbangan ekosistem pertanian Nunbena.
+                  </p>
+                </div>
+
+                <div className="bg-gradient-to-br from-amber-50 to-orange-50/50 rounded-2xl border border-amber-100 p-5 space-y-2.5">
+                  <div className="p-2 w-10 h-10 bg-amber-100 text-amber-800 rounded-xl flex items-center justify-center">
+                    <AlertCircle className="w-5 h-5 font-black" />
+                  </div>
+                  <h4 className="font-extrabold text-xs text-slate-800 uppercase tracking-wider">Respon Sensus Cepat</h4>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Setiap data koordinasi serangan yang dilaporkan akan langsung ternotifikasi ke wilayah kerja PPL masing-masing desa untuk divalidasi lapang dalam waktu kurang dari 2x24 jam.
+                  </p>
+                </div>
+              </div>
+
             </div>
           )}
 
