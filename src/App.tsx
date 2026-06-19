@@ -212,6 +212,55 @@ export default function App() {
   };
 
   const fetchExternalReportsClientSideDirectly = async (sheetId: string) => {
+    // Attempt A: Direct Client-to-Apps-Script GET Request (Best for Serverless/CORS)
+    if (appsScriptUrl) {
+      try {
+        const cleanScriptUrl = appsScriptUrl.trim();
+        console.log('[SINGKAP CLIENT] Trying direct client fetch from Apps Script Web App:', cleanScriptUrl);
+        
+        // Use a short timeout of 8 seconds so it doesn't hang if Apps Script is slow
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        
+        const scriptRes = await fetch(cleanScriptUrl, { 
+          signal: controller.signal 
+        });
+        clearTimeout(timeoutId);
+        
+        if (scriptRes.ok) {
+          const text = await scriptRes.text();
+          const trimmedText = text.trim();
+          
+          if (trimmedText && !trimmedText.startsWith('<!DOCTYPE html') && !trimmedText.startsWith('<html')) {
+            const parsedData = JSON.parse(trimmedText);
+            let rawRows: any[] = [];
+            
+            if (Array.isArray(parsedData)) {
+              rawRows = parsedData;
+            } else if (parsedData && Array.isArray(parsedData.data)) {
+              rawRows = parsedData.data;
+            } else if (parsedData && Array.isArray(parsedData.reports)) {
+              rawRows = parsedData.reports;
+            } else if (parsedData && typeof parsedData === 'object') {
+              const firstArrayProp = Object.keys(parsedData).find(key => Array.isArray(parsedData[key]));
+              if (firstArrayProp) {
+                rawRows = parsedData[firstArrayProp];
+              }
+            }
+            
+            if (rawRows.length > 0) {
+              console.log(`[SINGKAP CLIENT] Direct Apps Script fetch yielded ${rawRows.length} rows!`);
+              return clientNormalizeRawRows(rawRows);
+            }
+          }
+        }
+      } catch (scriptErr: any) {
+        console.warn('[SINGKAP CLIENT] Direct Apps Script fetch bypassed or caught error:', scriptErr.message);
+      }
+    }
+
+    // Attempt B: Client-side Public CSV Export (Standard spreadsheet exporter fallback)
+    console.log('[SINGKAP CLIENT] Fallback: Trying direct client CSV exporter for Sheet ID:', sheetId);
     const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
     const csvResponse = await fetch(csvUrl);
     if (!csvResponse.ok) {
