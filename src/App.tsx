@@ -622,13 +622,13 @@ _Sawah Lestari Sehat Bebas Racun Kimia Semasa Panen_`;
             </button>
 
             <button
-              onClick={() => setActiveTab('lapor')}
+              onClick={() => setActiveTab('ensiklopedia')}
               className={`px-4 py-2.5 flex items-center space-x-1.5 transition ${
-                activeTab === 'lapor' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+                activeTab === 'ensiklopedia' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
-              <Database className="w-3.5 h-3.5 text-emerald-500" />
-              <span>Rekap Laporan</span>
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Pestisida Nabati</span>
             </button>
 
             <button
@@ -642,13 +642,13 @@ _Sawah Lestari Sehat Bebas Racun Kimia Semasa Panen_`;
             </button>
 
             <button
-              onClick={() => setActiveTab('ensiklopedia')}
+              onClick={() => setActiveTab('lapor')}
               className={`px-4 py-2.5 flex items-center space-x-1.5 transition ${
-                activeTab === 'ensiklopedia' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+                activeTab === 'lapor' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>Pestisida Nabati</span>
+              <Database className="w-3.5 h-3.5 text-emerald-500" />
+              <span>Rekap Laporan</span>
             </button>
           </div>
         </div>

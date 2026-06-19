@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { PEST_CATALOG } from '../data';
 import { PestControlGuide } from '../types';
-import { CheckSquare, Square, ChevronRight, Leaf, Shield, BookOpen, Layers, Sparkles } from 'lucide-react';
+import { CheckSquare, Square, ChevronRight, Leaf, Shield, BookOpen, Layers, Sparkles, X } from 'lucide-react';
 
-function AutoImageSlider({ urls, name }: { urls: string[]; name: string }) {
+function AutoImageSlider({ urls, name, onImageClick }: { urls: string[]; name: string; onImageClick?: (url: string) => void }) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -35,8 +35,9 @@ function AutoImageSlider({ urls, name }: { urls: string[]; name: string }) {
           <img
             src={url}
             alt={`${name} slide ${idx + 1}`}
-            className="w-full h-full object-cover select-none"
+            className="w-full h-full object-cover select-none cursor-zoom-in hover:scale-102 transition duration-500"
             referrerPolicy="no-referrer"
+            onClick={() => onImageClick?.(url)}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               // Reliable botanical placeholder if a image link is blocklisted / fails
@@ -45,13 +46,18 @@ function AutoImageSlider({ urls, name }: { urls: string[]; name: string }) {
             }}
           />
           {/* Legend indicator overlay */}
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/70 to-transparent p-4 flex items-end justify-between">
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/70 to-transparent p-4 flex items-end justify-between pointer-events-none">
             <span className="text-white text-[10px] font-mono tracking-widest uppercase bg-emerald-600/80 px-2 py-0.5 rounded backdrop-blur-xs font-bold">
               Foto Lapangan #{idx + 1}
             </span>
-            <span className="text-slate-200 text-[10px] font-mono font-bold">
-              {idx + 1} / {urls.length}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-white text-[8px] tracking-wider uppercase bg-slate-900/40 px-2 py-0.5 rounded backdrop-blur-xs font-bold">
+                🔍 Klik Perbesar
+              </span>
+              <span className="text-slate-200 text-[10px] font-mono font-bold">
+                {idx + 1} / {urls.length}
+              </span>
+            </div>
           </div>
         </div>
       ))}
@@ -78,6 +84,22 @@ function AutoImageSlider({ urls, name }: { urls: string[]; name: string }) {
 export default function PestCatalog() {
   const [selectedPest, setSelectedPest] = useState<PestControlGuide>(PEST_CATALOG[0]);
   const [checkedSteps, setCheckedSteps] = useState<{ [key: string]: boolean }>({});
+  const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
+  const [activeTargetPestIndex, setActiveTargetPestIndex] = useState<number>(0);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setZoomImageUrl(null);
+      }
+    };
+    if (zoomImageUrl) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [zoomImageUrl]);
 
   const toggleCheckStep = (recipeIndex: number, stepIndex: number) => {
     const key = `${selectedPest.id}-${recipeIndex}-${stepIndex}`;
@@ -115,6 +137,7 @@ export default function PestCatalog() {
               onClick={() => {
                 setSelectedPest(pest);
                 setCheckedSteps({});
+                setActiveTargetPestIndex(0);
               }}
               className={`w-full text-left p-3.5 rounded-xl flex items-center justify-between transition-all duration-250 cursor-pointer border ${
                 selectedPest.id === pest.id
@@ -175,9 +198,9 @@ export default function PestCatalog() {
           {selectedPest.imageUrls && (
             <div id="image-gallery-box" className="space-y-1.5 text-left">
               <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-500" /> Galeri Foto Pembelajaran Tanaman
+                <Sparkles className="w-3.5 h-3.5 text-emerald-500" /> Galeri Foto Pembelajaran Tanaman (Klik foto untuk memperbesar)
               </span>
-              <AutoImageSlider urls={selectedPest.imageUrls} name={selectedPest.name} />
+              <AutoImageSlider urls={selectedPest.imageUrls} name={selectedPest.name} onImageClick={setZoomImageUrl} />
             </div>
           )}
 
@@ -232,11 +255,128 @@ export default function PestCatalog() {
                       🌿 {bio.title}
                     </h4>
                     <p className="text-slate-600 text-[10.5px] leading-relaxed mt-1.5">{bio.description}</p>
+                    
+                    {bio.pestImageUrl && (
+                      <div className="mt-3.5 space-y-1.5">
+                        <span className="text-[9.5px] uppercase tracking-wider text-slate-500 font-bold block">
+                          Visual Hama Utama (Klik untuk Perbesar):
+                        </span>
+                        <div 
+                          onClick={() => setZoomImageUrl(bio.pestImageUrl!)}
+                          className="relative h-32 w-full rounded-lg overflow-hidden border border-emerald-150 shadow-3xs cursor-zoom-in group bg-slate-100"
+                        >
+                          <img 
+                            src={bio.pestImageUrl} 
+                            alt={bio.title} 
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=400&q=80";
+                            }}
+                          />
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 to-transparent p-2 flex items-center justify-between pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="text-white text-[9px] font-mono">🔍 Klik Perbesar</span>
+                            <span className="text-[9px] bg-emerald-600 text-white font-bold px-1.5 py-0.5 rounded">HAMA</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           </div>
+
+          {/* Target Pests Grid section with custom photos */}
+          {selectedPest.targetPests && selectedPest.targetPests.length > 0 && (
+            <div className="space-y-4 pt-4 border-t border-slate-100 text-left">
+              <div>
+                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                  Sasaran Organisme Pengganggu Tumbuhan (Hama/Penyakit Utama)
+                </h3>
+                <p className="text-[11px] text-slate-500 leading-relaxed font-indonesian mt-1">
+                  Nama hama/penyakit di bawah ini dapat diklik untuk mengubah gambar visual penayangan langsung secara otomatis:
+                </p>
+              </div>
+
+              {/* Selector Names "di atas" */}
+              <div className="flex flex-wrap gap-2 p-1.5 bg-slate-50 rounded-xl border border-slate-200/60">
+                {selectedPest.targetPests.map((pest, pIdx) => {
+                  const isActive = activeTargetPestIndex === pIdx;
+                  return (
+                    <button
+                      key={pIdx}
+                      type="button"
+                      onClick={() => setActiveTargetPestIndex(pIdx)}
+                      className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all duration-200 flex items-center gap-1.5 border cursor-pointer ${
+                        isActive
+                          ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs font-black'
+                          : 'bg-white hover:bg-slate-100 border-slate-200 text-slate-700'
+                      }`}
+                    >
+                      <span className="text-[12px]">{isActive ? '🐛' : '▫️'}</span>
+                      <span>{pest.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Showcase Container "di bawah" */}
+              <div className="bg-slate-900 rounded-xl overflow-hidden border border-slate-800 shadow-md relative p-4 flex flex-col sm:flex-row gap-5 items-center">
+                {/* Image panel */}
+                <div 
+                  onClick={() => setZoomImageUrl(selectedPest.targetPests![activeTargetPestIndex].imageUrl)}
+                  className="relative aspect-video w-full sm:w-1/2 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 cursor-zoom-in group shrink-0"
+                >
+                  <img 
+                    src={selectedPest.targetPests![activeTargetPestIndex].imageUrl} 
+                    alt={selectedPest.targetPests![activeTargetPestIndex].name} 
+                    className="w-full h-full object-cover transition-transform duration-555 group-hover:scale-102"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=400&q=80";
+                    }}
+                  />
+                  {/* Overlay instructions */}
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/85 to-transparent p-3 flex items-center justify-between pointer-events-none">
+                    <span className="text-white text-[8px] font-mono tracking-widest uppercase bg-slate-900/60 px-2 py-0.5 rounded border border-white/5 font-bold">
+                      🔍 KLIK UNTUK PERBESAR
+                    </span>
+                    <span className="text-slate-300 text-[9px] font-mono font-bold">
+                      Index #{activeTargetPestIndex + 1}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Details panel */}
+                <div className="flex-1 text-left space-y-2.5 w-full">
+                  <div className="space-y-0.5">
+                    <span className="text-[8.5px] uppercase tracking-wider font-mono font-extrabold text-emerald-400 block bg-slate-800/60 px-2 py-0.5 rounded-md w-max border border-emerald-500/10">
+                      Visualisasi Aktif
+                    </span>
+                    <h4 className="text-base font-black text-white leading-tight">
+                      {selectedPest.targetPests![activeTargetPestIndex].name}
+                    </h4>
+                  </div>
+                  <p className="text-slate-300 text-[11px] leading-relaxed font-indonesian">
+                    Kemampuan herba herbisida/pestisida organik dari <strong>{selectedPest.name} ({selectedPest.localName})</strong> terbukti tangguh dalam melemahkan sistem respirasi dan menekan penetasan telur organisme pengganggu tumbuhan berupa <strong>{selectedPest.targetPests![activeTargetPestIndex].name}</strong> ini secara alami tanpa residu kimia berbahaya.
+                  </p>
+                  
+                  <div className="flex gap-2 pt-1 border-t border-slate-800/80">
+                    <span className="text-[9px] bg-slate-800 text-emerald-400 px-2 py-0.5 rounded font-mono font-bold">
+                      ✓ Ramuan Higienis
+                    </span>
+                    <span className="text-[9px] bg-slate-800 text-emerald-400 px-2 py-0.5 rounded font-mono font-bold">
+                      ✓ 100% Organik Nunbena
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Interactive Recipes Preparation Guideline Checklist */}
           {selectedPest.organicRecipes && selectedPest.organicRecipes.length > 0 && (
@@ -303,6 +443,47 @@ export default function PestCatalog() {
 
         </div>
       </div>
+
+      {/* Lightbox / Zoom Image Modal */}
+      {zoomImageUrl && (
+        <div 
+          id="image-zoom-overlay"
+          className="fixed inset-0 bg-slate-950/90 z-50 flex flex-col items-center justify-center p-4 backdrop-blur-md transition-all duration-300 cursor-zoom-out"
+          onClick={() => setZoomImageUrl(null)}
+        >
+          <div className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+            {/* Close Button top-right */}
+            <button
+              onClick={() => setZoomImageUrl(null)}
+              className="absolute -top-14 right-2 bg-white/10 hover:bg-white/20 hover:text-white text-slate-200 p-2.5 rounded-full transition-colors border border-white/10 cursor-pointer flex items-center gap-1.5"
+              aria-label="Tutup"
+            >
+              <X className="w-4 h-4" />
+              <span className="text-xs font-bold font-mono tracking-wider">TUTUP [ESC]</span>
+            </button>
+            
+            {/* Image container with nice frame */}
+            <div className="bg-slate-900 p-2 rounded-2xl border border-white/10 shadow-2xl max-w-full overflow-hidden">
+              <img
+                src={zoomImageUrl}
+                alt="Zoomed view"
+                className="max-w-full max-h-[75vh] object-contain rounded-xl select-none"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "https://images.unsplash.com/photo-1473081556163-2a17de81fc97?auto=format&fit=crop&w=800&q=80";
+                  target.referrerPolicy = "no-referrer";
+                }}
+              />
+            </div>
+            
+            {/* Description / metadata banner */}
+            <p className="text-center text-slate-300 text-xs mt-4 tracking-wide max-w-lg bg-slate-900/80 px-4 py-2 rounded-full border border-white/5 backdrop-blur-xs">
+              Suku Timor Nunbena NTT • Klik di mana saja untuk menutup kembali
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

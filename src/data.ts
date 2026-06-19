@@ -28,7 +28,38 @@ export const PEST_CATALOG: PestControlGuide[] = [
       },
       {
         title: 'Sasaran Hama Utama',
-        description: 'Efektif mengendalikan Ulat Grayak (Spodoptera), Belalang, Ulat Tanah, Walang Sangit, Thrips, Kutu Daun, dan Kumbang Daun.'
+        description: 'Efektif mengendalikan Ulat Grayak (Spodoptera), Belalang, Ulat Tanah, Walang Sangit, Thrips, Kutu Daun, dan Kumbang Daun.',
+        pestImageUrl: 'https://mplk.politanikoe.ac.id/images/gambar/Hama_Penting_Tanaman_Pertanian/Ulat_Grayak_dan_Gejala_Serangannya.png'
+      }
+    ],
+    targetPests: [
+      {
+        name: 'Ulat Grayak',
+        imageUrl: 'https://mplk.politanikoe.ac.id/images/gambar/Hama_Penting_Tanaman_Pertanian/Ulat_Grayak_dan_Gejala_Serangannya.png'
+      },
+      {
+        name: 'Belalang Sawah',
+        imageUrl: 'https://files.mahasiswa.ung.ac.id/613413023/jagungjpg'
+      },
+      {
+        name: 'Ulat Tanah',
+        imageUrl: 'https://id.plant-growth-regulator.com/Content/uploads/2023264467/2023051209163802de86d3442e4bab9105b3e6a9150529.jpg?size=723x0'
+      },
+      {
+        name: 'Walang Sangit',
+        imageUrl: 'https://mplk.politanikoe.ac.id/images/gambar/Hama_Penting_Tanaman_Pertanian/Walang_Sangit_Leptocorisa_acuta/Walang_Sangit_Leptocorisa_acuta1.jpg'
+      },
+      {
+        name: 'Thrips',
+        imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKk24BL_2SiPLqa5-3kY5suDaewoRzVPOrsl5sYJoEwkweI9SMAReX33I&s=10'
+      },
+      {
+        name: 'Kutu Daun',
+        imageUrl: 'https://asset.kompas.com/crops/gos4wexP3m2hedWopa7pDgIwuOI=/184x0:851x667/340x340/data/photo/2023/05/16/6463a5f5bc4dd.jpg'
+      },
+      {
+        name: 'Kumbang Daun',
+        imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/f/fb/Scarlet_lily_beetle_lilioceris_lilii.jpg'
       }
     ],
     organicRecipes: [
@@ -74,7 +105,30 @@ export const PEST_CATALOG: PestControlGuide[] = [
       },
       {
         title: 'Sasaran Hama Utama',
-        description: 'Sangat ampuh membasmi Wereng Batang Cokelat, Kutu Kebul, Ulat Grayak, Kutu Daun (Aphids), Thrips, dan Walang Sangit.'
+        description: 'Sangat ampuh membasmi Wereng Batang Cokelat, Kutu Kebul, Ulat Grayak, Kutu Daun (Aphids), Thrips, dan Walang Sangit.',
+        pestImageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRF85ojzSWd2JaQm7rWJov-rTz5JspuuMWbt9-xUXEgnlSTKwTcUx2yhk8&s=10'
+      }
+    ],
+    targetPests: [
+      {
+        name: 'Kutu Kebul',
+        imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRF85ojzSWd2JaQm7rWJov-rTz5JspuuMWbt9-xUXEgnlSTKwTcUx2yhk8&s=10'
+      },
+      {
+        name: 'Kutu Daun',
+        imageUrl: 'https://asset.kompas.com/crops/gos4wexP3m2hedWopa7pDgIwuOI=/184x0:851x667/340x340/data/photo/2023/05/16/6463a5f5bc4dd.jpg'
+      },
+      {
+        name: 'Ulat Grayak',
+        imageUrl: 'https://mplk.politanikoe.ac.id/images/gambar/Hama_Penting_Tanaman_Pertanian/Ulat_Grayak_dan_Gejala_Serangannya.png'
+      },
+      {
+        name: 'Thrips',
+        imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKk24BL_2SiPLqa5-3kY5suDaewoRzVPOrsl5sYJoEwkweI9SMAReX33I&s=10'
+      },
+      {
+        name: 'Walang Sangit',
+        imageUrl: 'https://mplk.politanikoe.ac.id/images/gambar/Hama_Penting_Tanaman_Pertanian/Walang_Sangit_Leptocorisa_acuta/Walang_Sangit_Leptocorisa_acuta1.jpg'
       }
     ],
     organicRecipes: [
@@ -119,7 +173,34 @@ export const PEST_CATALOG: PestControlGuide[] = [
       },
       {
         title: 'Sasaran Hama Utama',
-        description: 'Sangat efektif terhadap Belalang Sawah, Ulat Bulu, Thrips, Kutu Daun, Kepik Hijau, dan Ulat Krop Kubis.'
+        description: 'Sangat efektif terhadap Belalang Sawah, Ulat Bulu, Thrips, Kutu Daun, Kepik Hijau, dan Ulat Krop Kubis.',
+        pestImageUrl: 'https://files.mahasiswa.ung.ac.id/613413023/jagungjpg'
+      }
+    ],
+    targetPests: [
+      {
+        name: 'Belalang Sawah',
+        imageUrl: 'https://files.mahasiswa.ung.ac.id/613413023/jagungjpg'
+      },
+      {
+        name: 'Ulat Bulu',
+        imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Ulat_Duri_%28Caterpillar%29.jpg/960px-Ulat_Duri_%28Caterpillar%29.jpg'
+      },
+      {
+        name: 'Thrips',
+        imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKk24BL_2SiPLqa5-3kY5suDaewoRzVPOrsl5sYJoEwkweI9SMAReX33I&s=10'
+      },
+      {
+        name: 'Kutu Daun',
+        imageUrl: 'https://asset.kompas.com/crops/gos4wexP3m2hedWopa7pDgIwuOI=/184x0:851x667/340x340/data/photo/2023/05/16/6463a5f5bc4dd.jpg'
+      },
+      {
+        name: 'Kepik Hijau',
+        imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTJR0SjLJiIUcfNkhtd3--qAtZMDZnO3fcF879waW542g&s=10'
+      },
+      {
+        name: 'Ulat Krop Kubis (Plutella)',
+        imageUrl: 'https://bisatani.com/wp-content/uploads/2022/03/ulat-krop.jpg'
       }
     ],
     organicRecipes: [
@@ -164,7 +245,30 @@ export const PEST_CATALOG: PestControlGuide[] = [
       },
       {
         title: 'Sasaran Hama Utama',
-        description: 'Mencegah Jamur Antraknosa (Patek), Ulat Buah, Kutu Kebul, Lalat Buah, dan Kutu Dompolan.'
+        description: 'Mencegah Jamur Antraknosa (Patek), Ulat Buah, Kutu Kebul, Lalat Buah, dan Kutu Dompolan.',
+        pestImageUrl: 'https://digitani.ipb.ac.id/wp-content/uploads/2023/02/cabai_cr.png'
+      }
+    ],
+    targetPests: [
+      {
+        name: 'Patek (Antraknosa)',
+        imageUrl: 'https://digitani.ipb.ac.id/wp-content/uploads/2023/02/cabai_cr.png'
+      },
+      {
+        name: 'Ulat Buah',
+        imageUrl: 'https://www.dgwfertilizer.co.id/wp-content/uploads/2024/08/Helicoverpa-Armigera-1024x614.png'
+      },
+      {
+        name: 'Kutu Kebul',
+        imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRF85ojzSWd2JaQm7rWJov-rTz5JspuuMWbt9-xUXEgnlSTKwTcUx2yhk8&s=10'
+      },
+      {
+        name: 'Lalat Buah',
+        imageUrl: 'https://bibitbunga.com/wp-content/uploads/2017/02/lalat-buah-pada-jeruk.jpg'
+      },
+      {
+        name: 'Kutu Dompolan',
+        imageUrl: 'https://mplk.politanikoe.ac.id/images/gambar/Hama_Penting_Tanaman_Pertanian/Kutu_dompolan-01.jpg'
       }
     ],
     organicRecipes: [
@@ -209,7 +313,30 @@ export const PEST_CATALOG: PestControlGuide[] = [
       },
       {
         title: 'Sasaran Hama Utama',
-        description: 'Sangat ampuh melumpuhkan sistem navigasi Walang Sangit, Kutu Kebul, Lalat Melon/Buah, Kutu Daun, dan Semut Batang.'
+        description: 'Sangat ampuh melumpuhkan sistem navigasi Walang Sangit, Kutu Kebul, Lalat Melon/Buah, Kutu Daun, dan Semut Batang.',
+        pestImageUrl: 'https://mplk.politanikoe.ac.id/images/gambar/Hama_Penting_Tanaman_Pertanian/Walang_Sangit_Leptocorisa_acuta/Walang_Sangit_Leptocorisa_acuta1.jpg'
+      }
+    ],
+    targetPests: [
+      {
+        name: 'Walang Sangit',
+        imageUrl: 'https://mplk.politanikoe.ac.id/images/gambar/Hama_Penting_Tanaman_Pertanian/Walang_Sangit_Leptocorisa_acuta/Walang_Sangit_Leptocorisa_acuta1.jpg'
+      },
+      {
+        name: 'Kutu Kebul',
+        imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRF85ojzSWd2JaQm7rWJov-rTz5JspuuMWbt9-xUXEgnlSTKwTcUx2yhk8&s=10'
+      },
+      {
+        name: 'Lalat Buah',
+        imageUrl: 'https://bibitbunga.com/wp-content/uploads/2017/02/lalat-buah-pada-jeruk.jpg'
+      },
+      {
+        name: 'Kutu Daun',
+        imageUrl: 'https://asset.kompas.com/crops/gos4wexP3m2hedWopa7pDgIwuOI=/184x0:851x667/340x340/data/photo/2023/05/16/6463a5f5bc4dd.jpg'
+      },
+      {
+        name: 'Semut Batang',
+        imageUrl: 'https://indomgb.s3.amazonaws.com/wp-content/uploads/2018/12/22070318/semut-menganyam-3-768x512.jpg'
       }
     ],
     organicRecipes: [
@@ -254,7 +381,30 @@ export const PEST_CATALOG: PestControlGuide[] = [
       },
       {
         title: 'Sasaran Hama Utama',
-        description: 'Handal membasmi Ulat Grayak, Ulat Krop Kubis/Sawi, Belalang Hijau, Kutu Daun, dan Thrips.'
+        description: 'Handal membasmi Ulat Grayak, Ulat Krop Kubis/Sawi, Belalang Hijau, Kutu Daun, dan Thrips.',
+        pestImageUrl: 'https://mplk.politanikoe.ac.id/images/gambar/Hama_Penting_Tanaman_Pertanian/Ulat_Grayak_dan_Gejala_Serangannya.png'
+      }
+    ],
+    targetPests: [
+      {
+        name: 'Ulat Grayak',
+        imageUrl: 'https://mplk.politanikoe.ac.id/images/gambar/Hama_Penting_Tanaman_Pertanian/Ulat_Grayak_dan_Gejala_Serangannya.png'
+      },
+      {
+        name: 'Ulat Krop Kubis (Plutella)',
+        imageUrl: 'https://bisatani.com/wp-content/uploads/2022/03/ulat-krop.jpg'
+      },
+      {
+        name: 'Belalang Hijau',
+        imageUrl: 'https://asset.kompas.com/crops/2fODZDKp-9K_CJG-ls7nORO_I3U=/197x127:1723x1144/375x240/data/photo/2021/07/02/60df042364070.jpg'
+      },
+      {
+        name: 'Kutu Daun',
+        imageUrl: 'https://asset.kompas.com/crops/gos4wexP3m2hedWopa7pDgIwuOI=/184x0:851x667/340x340/data/photo/2023/05/16/6463a5f5bc4dd.jpg'
+      },
+      {
+        name: 'Thrips',
+        imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKk24BL_2SiPLqa5-3kY5suDaewoRzVPOrsl5sYJoEwkweI9SMAReX33I&s=10'
       }
     ],
     organicRecipes: [
@@ -296,11 +446,34 @@ export const PEST_CATALOG: PestControlGuide[] = [
     biologicalControls: [
       {
         title: 'Manfaat Utama Kunyit',
-        description: 'Mengandung curcuminoid (kurkumin) berkualitas tinggi dan minyak atsiri rimpang. Memiliki daya hambat Antijamur (Fungisida) dan Antibakteri sangat luas, melindungi sistem tanaman dari patogen busuk akar rimpang dan tular tanah.'
+        description: 'Mengandung curcuminoid (kurkumin) berkualitas tinggi dan minyak atsiri rimpang. Memiliki daya hambat Antijamur (Fungisida) and Antibakteri sangat luas, melindungi sistem tanaman dari patogen busuk akar rimpang dan tular tanah.'
       },
       {
         title: 'Sasaran Hama Utama',
-        description: 'Sangat efektif terhadap Jamur Karat Daun, Embun Tepung (Downy Mildew), Layu Fusarium, Kutu Kebul, dan Ulat Kecil.'
+        description: 'Sangat efektif terhadap Jamur Karat Daun, Embun Tepung (Downy Mildew), Layu Fusarium, Kutu Kebul, dan Ulat Kecil.',
+        pestImageUrl: 'https://asset.kompas.com/crops/DlyUMsg7cAkVD8BHP5cOxOwSHUM=/52x6:375x328/340x340/data/photo/2023/01/18/63c7c2f9ea5fd.jpg'
+      }
+    ],
+    targetPests: [
+      {
+        name: 'Jamur Karat Daun',
+        imageUrl: 'https://asset.kompas.com/crops/DlyUMsg7cAkVD8BHP5cOxOwSHUM=/52x6:375x328/340x340/data/photo/2023/01/18/63c7c2f9ea5fd.jpg'
+      },
+      {
+        name: 'Embun Tepung',
+        imageUrl: 'https://asset.kompas.com/crops/U7J1XITzn7RDXUMzNSxjhVa4d7Q=/100x67:900x600/1200x800/data/photo/2023/03/17/64148c6086913.jpg'
+      },
+      {
+        name: 'Layu Fusarium',
+        imageUrl: 'https://distankan.bulelengkab.go.id/uploads/konten/68_layu-fusarium-cabai-dan-teknik-pengendaliannya.jpg'
+      },
+      {
+        name: 'Kutu Kebul',
+        imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRF85ojzSWd2JaQm7rWJov-rTz5JspuuMWbt9-xUXEgnlSTKwTcUx2yhk8&s=10'
+      },
+      {
+        name: 'Ulat Kecil',
+        imageUrl: 'https://bisatani.com/wp-content/uploads/2022/03/Plutella-Larva.jpg'
       }
     ],
     organicRecipes: [

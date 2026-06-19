@@ -42,6 +42,11 @@ export interface PestControlGuide {
   biologicalControls: {
     title: string;
     description: string;
+    pestImageUrl?: string;
+  }[];
+  targetPests?: {
+    name: string;
+    imageUrl: string;
   }[];
   organicRecipes: {
     name: string;
