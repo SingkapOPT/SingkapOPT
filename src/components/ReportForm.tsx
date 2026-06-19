@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { OPTReport, SeverityLevel } from '../types';
+import { OPTReport, SeverityLevel, getGoogleDriveThumbnail } from '../types';
 import { Upload, AlertCircle, Sparkles, Check, Image as ImageIcon } from 'lucide-react';
 
 interface ReportFormProps {
@@ -47,6 +47,7 @@ export default function ReportForm({ onSubmitReport, onAnalyzeAI }: ReportFormPr
 
   const [description, setDescription] = useState('');
   const [image, setImage] = useState<string>(''); // base64 string
+  const [imageLink, setImageLink] = useState('');
   
   // AI assist state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -173,6 +174,7 @@ export default function ReportForm({ onSubmitReport, onAnalyzeAI }: ReportFormPr
       setLocationVillage('');
       setDescription('');
       setImage('');
+      setImageLink('');
       setAiResult(null);
       setSubmitSuccess(false);
     }, 2000);
@@ -319,7 +321,9 @@ export default function ReportForm({ onSubmitReport, onAnalyzeAI }: ReportFormPr
                   >
                     <option value="Padi">Padi (Sawah Irigasi/Tadah Hujan)</option>
                     <option value="Jagung">Jagung</option>
-                    <option value="Cabai">Cabai Merah / Cabai Rawit</option>
+                    <option value="Cabai">Cabai (Cabai Merah / Cabai Rawit)</option>
+                    <option value="Sawi">Sawi</option>
+                    <option value="Kol">Kol</option>
                     <option value="Bawang Merah">Bawang Merah</option>
                     <option value="Kedelai">Kedelai / Kacang Tanah</option>
                   </select>
@@ -412,6 +416,27 @@ export default function ReportForm({ onSubmitReport, onAnalyzeAI }: ReportFormPr
                     onChange={handleFileChange}
                     className="hidden"
                   />
+                </div>
+                {/* Google Drive Link paste input option */}
+                <div className="mt-2 text-left">
+                  <span className="block text-[10px] text-slate-400 font-extrabold uppercase mb-1">PILIHAN LAIN: TEMPEL TAUTAN GOOGLE DRIVE / ONLINE</span>
+                  <input
+                    type="text"
+                    placeholder="Tempel link share Google Drive (view link) atau url foto online..."
+                    value={imageLink}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setImageLink(val);
+                      if (val.trim()) {
+                        const directThumb = getGoogleDriveThumbnail(val);
+                        setImage(directThumb);
+                      } else {
+                        setImage('');
+                      }
+                    }}
+                    className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-slate-50/50 hover:bg-slate-50 transition"
+                  />
+                  <p className="text-[9px] text-slate-400 mt-1 leading-normal italic">Setiap url Google Drive otomatis dikonversikan menjadi gambar presisi di beranda GIS & rekapitulasi.</p>
                 </div>
               </div>
             </div>

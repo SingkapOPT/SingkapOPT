@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import fs from 'fs';
+import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
 
@@ -11,6 +12,23 @@ const app = express();
 const PORT = 3000;
 
 app.use(express.json({ limit: '10mb' }));
+
+// Supabase Configuration
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://kxeuazumpnmscwpephll.supabase.co';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || '';
+
+let supabase: any = null;
+
+if (SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY' && SUPABASE_ANON_KEY.trim() !== '') {
+  try {
+    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('[SINGKAP Server] Supabase client initialized with URL:', SUPABASE_URL);
+  } catch (err) {
+    console.error('[SINGKAP Server] Failed to initialize Supabase client:', err);
+  }
+} else {
+  console.log('[SINGKAP Server] Supabase is NOT fully configured. Using local fallback file storage.');
+}
 
 // Persistent Visitor Counter with Daily Breakdowns
 let visitorCount = 0;
@@ -30,40 +48,176 @@ function getTodayString() {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-try {
-  if (fs.existsSync(visitorFilePath)) {
-    const data = fs.readFileSync(visitorFilePath, 'utf8');
-    const parsed = JSON.parse(data);
-    if (typeof parsed.count === 'number') {
-      visitorCount = parsed.count;
-    } else if (typeof parsed.total === 'number') {
-      visitorCount = parsed.total;
+// Background sync function for visitor logs in Supabase
+async function syncVisitorWithSupabase(ip: string, userAgent: string, pagePath: string) {
+  if (!supabase) return;
+  try {
+    // Try to log in visitor_logs table or update visitor_counts
+    const payload = {
+      ip_address: ip,
+      user_agent: userAgent,
+      page_path: pagePath,
+      created_at: new Date().toISOString()
+    };
+    
+    // Try visitor_logs first
+    const { error: err1 } = await supabase.from('visitor_logs').insert([payload]);
+    if (err1) {
+      // If error (e.g. table not found), try 'visitors' table
+      const { error: err2 } = await supabase.from('visitors').insert([payload]);
+      if (err2) {
+        // Fallback to simple key-value structure
+        await supabase.from('visitor_counts').upsert({
+          id: 'main_counter',
+          total_count: visitorCount,
+          last_updated: payload.created_at
+        }, { onConflict: 'id' });
+      }
     }
-    if (parsed.daily && typeof parsed.daily === 'object') {
-      dailyVisitors = parsed.daily;
-    }
-  } else {
-    fs.writeFileSync(visitorFilePath, JSON.stringify({ total: visitorCount, count: visitorCount, daily: dailyVisitors }), 'utf8');
+  } catch (err) {
+    console.warn('[SINGKAP Supabase Async] Failed synchronizing to cloud database:', err);
   }
-} catch (e) {
-  console.log('[SINGKAP Server] Error initialized visitor count:', e);
 }
+
+// Fetch aggregate data from Supabase if connected
+async function getSupabaseVisitorCount(): Promise<{ total: number; daily: Record<string, number> } | null> {
+  if (!supabase) return null;
+  try {
+    // Attempt counting row records from visitor_logs
+    const { count: countLogs, error: errLogs } = await supabase
+      .from('visitor_logs')
+      .select('*', { count: 'exact', head: true });
+      
+    if (!errLogs && typeof countLogs === 'number') {
+      const { data: listRows } = await supabase.from('visitor_logs').select('created_at').limit(1000);
+      const daily: Record<string, number> = {};
+      if (listRows) {
+        listRows.forEach((row: any) => {
+          if (row.created_at) {
+            const dayKey = row.created_at.split('T')[0];
+            daily[dayKey] = (daily[dayKey] || 0) + 1;
+          }
+        });
+      }
+      return { total: countLogs, daily };
+    }
+    
+    // Try visitors table
+    const { count: countVisitors, error: errVisitors } = await supabase
+      .from('visitors')
+      .select('*', { count: 'exact', head: true });
+      
+    if (!errVisitors && typeof countVisitors === 'number') {
+      const { data: listRows } = await supabase.from('visitors').select('created_at').limit(1000);
+      const daily: Record<string, number> = {};
+      if (listRows) {
+        listRows.forEach((row: any) => {
+          if (row.created_at) {
+            const dayKey = row.created_at.split('T')[0];
+            daily[dayKey] = (daily[dayKey] || 0) + 1;
+          }
+        });
+      }
+      return { total: countVisitors, daily };
+    }
+    
+    // Try counter table
+    const { data: counterRow, error: errCounter } = await supabase
+      .from('visitor_counts')
+      .select('*')
+      .eq('id', 'main_counter')
+      .single();
+      
+    if (!errCounter && counterRow) {
+      return {
+        total: counterRow.total_count || 0,
+        daily: {}
+      };
+    }
+  } catch (err) {
+    console.error('[SINGKAP Supabase Count] Error polling counts from container:', err);
+  }
+  return null;
+}
+
+// Core Initialization
+async function initializeVisitorSystem() {
+  // Read local first
+  try {
+    if (fs.existsSync(visitorFilePath)) {
+      const data = fs.readFileSync(visitorFilePath, 'utf8');
+      const parsed = JSON.parse(data);
+      if (typeof parsed.count === 'number') visitorCount = parsed.count;
+      else if (typeof parsed.total === 'number') visitorCount = parsed.total;
+      if (parsed.daily && typeof parsed.daily === 'object') {
+        dailyVisitors = parsed.daily;
+      }
+    } else {
+      fs.writeFileSync(visitorFilePath, JSON.stringify({ total: visitorCount, count: visitorCount, daily: dailyVisitors }), 'utf8');
+    }
+  } catch (e) {
+    console.log('[SINGKAP Server] Error initialized visitor count:', e);
+  }
+
+  // Attempt syncing with Supabase project ID kxeuazumpnmscwpephll
+  if (supabase) {
+    console.log('[SINGKAP Server] Syncing and fetching visitor records from Supabase...');
+    const remote = await getSupabaseVisitorCount();
+    if (remote) {
+      if (remote.total > visitorCount) {
+        visitorCount = remote.total;
+      }
+      Object.entries(remote.daily).forEach(([date, num]) => {
+        if (!dailyVisitors[date] || dailyVisitors[date] < num) {
+          dailyVisitors[date] = num;
+        }
+      });
+      // Save local backup cache
+      try {
+        fs.writeFileSync(visitorFilePath, JSON.stringify({ total: visitorCount, count: visitorCount, daily: dailyVisitors }, null, 2), 'utf8');
+      } catch (err) {
+        // silent
+      }
+    }
+  }
+}
+
+// Start async initialization run
+initializeVisitorSystem();
 
 // API endpoint to get and increment visitor count
 app.get('/api/visitor-count', (req, res) => {
   const shouldIncrement = req.query.increment !== 'false';
   const today = getTodayString();
-  
+  const isSupabaseConfigured = !!(SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY' && SUPABASE_ANON_KEY.trim() !== '');
+
   if (shouldIncrement) {
     visitorCount++;
     dailyVisitors[today] = (dailyVisitors[today] || 0) + 1;
+    
+    // Save locally
     try {
       fs.writeFileSync(visitorFilePath, JSON.stringify({ total: visitorCount, count: visitorCount, daily: dailyVisitors }, null, 2), 'utf8');
     } catch (e) {
       console.log('[SINGKAP Server] Error saving visitor count:', e);
     }
+    
+    // Trigger lazy non-blocking sync background thread
+    if (isSupabaseConfigured) {
+      const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
+      const userAgent = req.headers['user-agent'] || 'Unknown';
+      syncVisitorWithSupabase(ip, userAgent, '/').catch(err => {
+        console.warn('[SINGKAP Server] Background thread sync error:', err);
+      });
+    }
   }
-  res.json({ count: visitorCount, daily: dailyVisitors });
+  
+  res.json({ 
+    count: visitorCount, 
+    daily: dailyVisitors,
+    supabaseConfigured: isSupabaseConfigured,
+    supabaseUrl: SUPABASE_URL
+  });
 });
 
 // Lazy initializer for GoogleGenAI
@@ -439,7 +593,8 @@ function normalizeRawRows(rawRows: any[]): any[] {
 
     const farmerName = getVal(['NamaPelapor', 'NamaPetani', 'Nama', 'Pelapor', 'farmerName', 'NamaLengkap', 'NamaLengkapPelapor'], `Petani Desa ${locationVillage}`);
     const contact = getVal(['Contact', 'Kontak', 'NomorWA', 'NoWA', 'NoHP', 'WhatsApp', 'NoTelp', 'contact', 'NomorWhatsapp', 'NomorTelepon', 'NoHandphone', 'NoHpWa', 'nohpwa', 'nohp'], '');
-    const cropType = getVal(['CropType', 'Komoditas', 'Tanaman', 'JenisTanaman', 'cropType', 'JenisKomoditas'], 'Padi');
+    const rawCropType = getVal(['CropType', 'Komoditas', 'Tanaman', 'JenisTanaman', 'cropType', 'JenisKomoditas', 'Komoditi', 'Komodity', 'Commodity'], 'Padi');
+    const cropType = typeof rawCropType === 'string' ? rawCropType.trim() : 'Padi';
     const pestName = getVal(['PestName', 'Hama', 'OPT', 'JenisHama', 'pestName', 'NamaHama', 'NamaOPT', 'HamaPenyakit', 'Kendal', 'Kendala', 'kendal', 'kendala'], 'Wereng Batang Cokelat');
     const severity = getVal(['Severity', 'Intensitas', 'KategoriSerangan', 'severity', 'TingkatKeparahan', 'TingkatSerangan', 'Keparahan'], 'Sedang');
     const affectedArea = parseFloat(getVal(['AffectedArea', 'LuasSerangan', 'LuasSeranganHa', 'LuasLahan', 'Luas', 'affectedArea', 'EstimasiLuasSeranganHa', 'EstimasiLuas', 'LuasSeranganHektar', 'LuasHektar'], '1.0'));
@@ -447,6 +602,33 @@ function normalizeRawRows(rawRows: any[]): any[] {
     const description = getVal(['Description', 'Keterangan', 'DeskripsiGejala', 'Deskripsi', 'description', 'KeteranganTambahan', 'DeskripsiGejalaKeterangantambahan', 'FotoKondisi', 'fotokondisi'], 'Serangan OPT dilaporkan dari Google Form.');
     const attackDate = getVal(['AttackDate', 'Tanggal', 'TanggalSerangan', 'date', 'attackDate', 'Timestamp', 'Waktu'], new Date().toISOString().split('T')[0]);
     const statusValue = getVal(['Status', 'StatusLaporan', 'status'], 'Menunggu Verifikasi');
+
+    // Parse imageUrl / foto and resolve Google Drive sharing links automatically
+    let rawImageUrl = getVal(['imageUrl', 'FotoKondisi', 'fotokondisi', 'Foto', 'FotoHama', 'LinkFoto', 'LinkFotoDrive', 'BuktiFoto', 'Image', 'Photo'], '');
+    if (!rawImageUrl && description) {
+      const driveRegex = /(https?:\/\/(?:drive|docs)\.google\.com\/[^\s"'>]+)/i;
+      const match = description.match(driveRegex);
+      if (match) {
+        rawImageUrl = match[1];
+      }
+    }
+
+    let imageUrl = rawImageUrl ? rawImageUrl.trim() : '';
+    if (imageUrl) {
+      const regD = /\/file\/d\/([a-zA-Z0-9-_]+)/i;
+      const regId = /[?&]id=([a-zA-Z0-9-_]+)/i;
+      let driveId = null;
+      const dMatch = imageUrl.match(regD);
+      if (dMatch) {
+        driveId = dMatch[1];
+      } else {
+        const idMatch = imageUrl.match(regId);
+        if (idMatch) driveId = idMatch[1];
+      }
+      if (driveId) {
+        imageUrl = `https://drive.google.com/thumbnail?id=${driveId}&sz=w600`;
+      }
+    }
 
     // Geolocation fallback
     const latRaw = getVal(['Latitude', 'Lintang', 'latitude'], '');
@@ -470,6 +652,7 @@ function normalizeRawRows(rawRows: any[]): any[] {
       longitude: isNaN(lng) ? defaultLng : lng,
       attackDate: attackDate.split(' ')[0] || attackDate, // remove timestamp hours if any
       description,
+      imageUrl,
       status: (['Menunggu Verifikasi', 'Terverifikasi', 'Terkendali'].includes(statusValue) ? statusValue : 'Menunggu Verifikasi'),
       pplNotes: getVal(['PplNotes', 'CatatanPPL', 'pplNotes'], ''),
       pplVerifiedBy: getVal(['PplVerifiedBy', 'pplVerifiedBy'], ''),

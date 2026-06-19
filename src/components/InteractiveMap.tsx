@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { OPTReport } from '../types';
-import { AlertCircle, ShieldAlert, CheckCircle2, Navigation, Layers, Filter } from 'lucide-react';
+import { AlertCircle, ShieldAlert, CheckCircle2, Navigation, Layers, Filter, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface InteractiveMapProps {
   reports: OPTReport[];
@@ -11,6 +11,7 @@ export default function InteractiveMap({ reports }: InteractiveMapProps) {
   const [clickedPin, setClickedPin] = useState<OPTReport | null>(null);
   const [cropFilter, setCropFilter] = useState<string>('Semua');
   const [statusFilter, setStatusFilter] = useState<string>('Semua');
+  const [legendMinimized, setLegendMinimized] = useState<boolean>(false);
 
   // Hardcoded villages for Vector Map representation (Kecamatan Nunbena)
   // Each village has its center coordinates inside our mock grid, and boundaries
@@ -52,9 +53,18 @@ export default function InteractiveMap({ reports }: InteractiveMapProps) {
     };
   };
 
+  // Extract unique crop types dynamically from the reports array
+  const uniqueCrops = Array.from(
+    new Set(
+      reports
+        .map((r) => r.cropType?.trim())
+        .filter((c): c is string => Boolean(c))
+    )
+  ).sort();
+
   // Filter reports
   const filteredReports = reports.filter(r => {
-    const matchesCrop = cropFilter === 'Semua' || r.cropType === cropFilter;
+    const matchesCrop = cropFilter === 'Semua' || (r.cropType && r.cropType.trim() === cropFilter.trim());
     const matchesStatus = statusFilter === 'Semua' || r.status === statusFilter;
     return matchesCrop && matchesStatus;
   });
@@ -84,12 +94,14 @@ export default function InteractiveMap({ reports }: InteractiveMapProps) {
                 setCropFilter(e.target.value);
                 setClickedPin(null);
               }}
-              className="bg-transparent border-none text-slate-200 focus:outline-none text-[10px] font-semibold"
+              className="bg-transparent border-none text-slate-200 focus:outline-none text-[10px] font-semibold cursor-pointer"
             >
-              <option value="Semua">Semua Komoditas</option>
-              <option value="Padi">Padi</option>
-              <option value="Jagung">Jagung</option>
-              <option value="Cabai">Cabai</option>
+              <option value="Semua" className="text-slate-900 bg-white">Semua Komoditas</option>
+              {uniqueCrops.map((crop) => (
+                <option key={crop} value={crop} className="text-slate-900 bg-white">
+                  {crop}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -101,12 +113,12 @@ export default function InteractiveMap({ reports }: InteractiveMapProps) {
                 setStatusFilter(e.target.value);
                 setClickedPin(null);
               }}
-              className="bg-transparent border-none text-slate-200 focus:outline-none text-[10px] font-semibold"
+              className="bg-transparent border-none text-slate-200 focus:outline-none text-[10px] font-semibold cursor-pointer"
             >
-              <option value="Semua">Semua Status</option>
-              <option value="Menunggu Verifikasi">Menunggu Verifikasi</option>
-              <option value="Terverifikasi">Terverifikasi</option>
-              <option value="Terkendali">Terkendali</option>
+              <option value="Semua" className="text-slate-900 bg-white">Semua Status</option>
+              <option value="Menunggu Verifikasi" className="text-slate-900 bg-white">Menunggu Verifikasi</option>
+              <option value="Terverifikasi" className="text-slate-900 bg-white">Terverifikasi</option>
+              <option value="Terkendali" className="text-slate-900 bg-white">Terkendali</option>
             </select>
           </div>
         </div>
@@ -237,20 +249,37 @@ export default function InteractiveMap({ reports }: InteractiveMapProps) {
             );
           })}
 
-          <div className="absolute bottom-3 left-3 bg-white/95 border border-slate-100 rounded-lg p-2.5 shadow-sm text-[9px] space-y-1.5 font-medium z-10">
-            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest block mb-0.5">LEGENDA SEBARAN</span>
-            <div className="flex items-center space-x-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-600 block"></span>
-              <span className="text-slate-600 font-bold">Darurat OPT (Berat / Puso)</span>
-            </div>
-            <div className="flex items-center space-x-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 block"></span>
-              <span className="text-slate-600 font-bold">Waspada Serangan (Ringan/Sedang)</span>
-            </div>
-            <div className="flex items-center space-x-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-sky-500 block"></span>
-              <span className="text-slate-600 font-bold">OPT Terkendali (POPT Action)</span>
-            </div>
+          <div className="absolute bottom-3 right-3 bg-white/95 backdrop-blur-xs border border-slate-200/80 rounded-xl p-2.5 shadow-md text-[9px] font-medium z-10 transition-all duration-300 w-44">
+            <button
+              onClick={() => setLegendMinimized(!legendMinimized)}
+              className="flex items-center justify-between w-full text-left focus:outline-none"
+            >
+              <span className="text-[8px] font-extrabold text-slate-500 uppercase tracking-widest block">
+                LEGENDA SEBARAN
+              </span>
+              {legendMinimized ? (
+                <ChevronUp className="w-3.5 h-3.5 text-slate-500 hover:text-slate-800 transition shrink-0 ml-1" />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5 text-slate-500 hover:text-slate-800 transition shrink-0 ml-1" />
+              )}
+            </button>
+            
+            {!legendMinimized && (
+              <div className="mt-2 space-y-1.5 pt-1.5 border-t border-slate-100">
+                <div className="flex items-center space-x-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-600 block animate-pulse"></span>
+                  <span className="text-slate-600 font-bold">Darurat OPT (Berat/Puso)</span>
+                </div>
+                <div className="flex items-center space-x-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 block"></span>
+                  <span className="text-slate-600 font-bold">Waspada (Ringan/Sedang)</span>
+                </div>
+                <div className="flex items-center space-x-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-sky-500 block"></span>
+                  <span className="text-slate-600 font-bold">OPT Terkendali</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -301,6 +330,20 @@ export default function InteractiveMap({ reports }: InteractiveMapProps) {
                   <span className="font-bold text-slate-800">{clickedPin.affectedArea} Hektar</span>
                 </div>
               </div>
+
+              {clickedPin.imageUrl && (
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Foto Bukti Fisik:</span>
+                  <div className="mt-1 border border-slate-150 rounded-xl overflow-hidden bg-slate-950 aspect-video flex items-center justify-center shadow-2xs">
+                    <img 
+                      src={clickedPin.imageUrl} 
+                      alt="Foto Gejala OPT" 
+                      className="max-h-full max-w-full object-contain"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                </div>
+              )}
 
               {clickedPin.description && (
                 <div>

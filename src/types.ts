@@ -61,3 +61,29 @@ export interface ChatMessage {
   text: string;
   timestamp: string;
 }
+
+export function getGoogleDriveThumbnail(url: string | undefined): string {
+  if (!url) return '';
+  const trimmed = url.trim();
+  
+  // Regex to capture drive file ID
+  const regD = /\/file\/d\/([a-zA-Z0-9-_]+)/i;
+  const regId = /[?&]id=([a-zA-Z0-9-_]+)/i;
+  
+  let id: string | null = null;
+  const dMatch = trimmed.match(regD);
+  if (dMatch) {
+    id = dMatch[1];
+  } else {
+    const idMatch = trimmed.match(regId);
+    if (idMatch) {
+      id = idMatch[1];
+    }
+  }
+  
+  if (id) {
+    return `https://drive.google.com/thumbnail?id=${id}&sz=w600`;
+  }
+  return trimmed;
+}
+

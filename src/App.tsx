@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { OPTReport, UserRole } from './types';
+import { OPTReport, UserRole, getGoogleDriveThumbnail } from './types';
 import { INITIAL_REPORTS } from './data';
 import DashboardStats from './components/DashboardStats';
 import ReportForm from './components/ReportForm';
@@ -171,16 +171,29 @@ export default function App() {
 
       const farmerName = getVal(['NamaPelapor', 'NamaPetani', 'Nama', 'Pelapor', 'farmerName', 'NamaLengkap', 'NamaLengkapPelapor'], `Petani Desa ${locationVillage}`);
       const contact = getVal(['Contact', 'Kontak', 'NomorWA', 'NoWA', 'NoHP', 'WhatsApp', 'NoTelp', 'contact', 'NomorWhatsapp', 'NomorTelepon', 'NoHandphone', 'NoHpWa', 'nohpwa', 'nohp'], '');
-      const cropType = getVal(['CropType', 'Komoditas', 'Tanaman', 'JenisTanaman', 'cropType', 'JenisKomoditas'], 'Padi');
+      const rawCropType = getVal(['CropType', 'Komoditas', 'Tanaman', 'JenisTanaman', 'cropType', 'JenisKomoditas', 'Komoditi', 'Komodity', 'Commodity'], 'Padi');
+      const cropType = typeof rawCropType === 'string' ? rawCropType.trim() : 'Padi';
       const pestName = getVal(['PestName', 'Hama', 'OPT', 'JenisHama', 'pestName', 'NamaHama', 'NamaOPT', 'HamaPenyakit', 'Kendal', 'Kendala', 'kendal', 'kendala'], 'Wereng Batang Cokelat');
       const severity = getVal(['Severity', 'Intensitas', 'KategoriSerangan', 'severity', 'TingkatKeparahan', 'TingkatSerangan', 'Keparahan'], 'Sedang');
       const affectedArea = parseFloat(getVal(['AffectedArea', 'LuasSerangan', 'LuasSeranganHa', 'LuasLahan', 'Luas', 'affectedArea', 'EstimasiLuasSeranganHa', 'EstimasiLuas', 'LuasSeranganHektar', 'LuasHektar'], '1.0'));
       const description = getVal(['Description', 'Keterangan', 'DeskripsiGejala', 'Deskripsi', 'description', 'KeteranganTambahan', 'DeskripsiGejalaKeterangantambahan', 'FotoKondisi', 'fotokondisi'], 'Serangan OPT dilaporkan.');
       const attackDate = getVal(['AttackDate', 'Tanggal', 'TanggalSerangan', 'date', 'attackDate', 'Timestamp', 'Waktu'], new Date().toISOString().split('T')[0]);
       const statusValue = getVal(['Status', 'StatusLaporan', 'status'], 'Menunggu Verifikasi');
+
+      // Parse imageUrl / foto and resolve Google Drive sharing links automatically
+      let rawImageUrl = getVal(['imageUrl', 'FotoKondisi', 'fotokondisi', 'Foto', 'FotoHama', 'LinkFoto', 'LinkFotoDrive', 'BuktiFoto', 'Image', 'Photo'], '');
+      if (!rawImageUrl && description) {
+        const driveRegex = /(https?:\/\/(?:drive|docs)\.google\.com\/[^\s"'>]+)/i;
+        const match = description.match(driveRegex);
+        if (match) {
+          rawImageUrl = match[1];
+        }
+      }
       
-      const latRaw = getVal(['Latitude', 'Lintang', 'latitude'], '');
-      const lngRaw = getVal(['Longitude', 'Bujur', 'longitude'], '');
+      const imageUrl = getGoogleDriveThumbnail(rawImageUrl);
+      
+      const latRaw = getVal(['Latitude', 'Lintang', 'latitude'], '').toString().replace(',', '.').trim();
+      const lngRaw = getVal(['Longitude', 'Bujur', 'longitude'], '').toString().replace(',', '.').trim();
       const lat = latRaw ? parseFloat(latRaw) : defaultLat;
       const lng = lngRaw ? parseFloat(lngRaw) : defaultLng;
 
@@ -199,6 +212,7 @@ export default function App() {
         longitude: isNaN(lng) ? defaultLng : lng,
         attackDate: attackDate.split(' ')[0] || attackDate,
         description,
+        imageUrl,
         status: (['Menunggu Verifikasi', 'Terverifikasi', 'Terkendali'].includes(statusValue) ? statusValue : 'Menunggu Verifikasi') as 'Menunggu Verifikasi' | 'Terverifikasi' | 'Terkendali',
         pplNotes: getVal(['PplNotes', 'CatatanPPL', 'pplNotes'], ''),
         pplVerifiedBy: getVal(['PplVerifiedBy', 'pplVerifiedBy'], ''),
@@ -381,6 +395,9 @@ export default function App() {
   const [dailyVisitors, setDailyVisitors] = useState<Record<string, number>>({});
   const [isVisitorStatsModalOpen, setIsVisitorStatsModalOpen] = useState<boolean>(false);
   const [showVisitorPopup, setShowVisitorPopup] = useState<boolean>(true);
+  
+  const [supabaseConfigured, setSupabaseConfigured] = useState<boolean>(false);
+  const [currentSupabaseUrl, setCurrentSupabaseUrl] = useState<string>('https://kxeuazumpnmscwpephll.supabase.co');
 
   useEffect(() => {
     const fetchVisitorCount = async () => {
@@ -392,6 +409,12 @@ export default function App() {
             setVisitorCount(data.count);
             if (data.daily && typeof data.daily === 'object') {
               setDailyVisitors(data.daily);
+            }
+            if (typeof data.supabaseConfigured === 'boolean') {
+              setSupabaseConfigured(data.supabaseConfigured);
+            }
+            if (data.supabaseUrl) {
+              setCurrentSupabaseUrl(data.supabaseUrl);
             }
             localStorage.setItem('singkap_fallback_visitor_count', String(data.count));
             if (data.daily) {
@@ -1087,6 +1110,69 @@ _Sawah Lestari Sehat Bebas Racun Kimia Semasa Panen_`;
                       >
                         Tes & Sinkronkan Sekarang
                       </button>
+                    </div>
+
+                    {/* Supabase Analytics Integration Card */}
+                    <div className="col-span-1 md:col-span-2 pt-3 mt-2 border-t border-dashed border-slate-200 space-y-3">
+                      <div className="space-y-1">
+                        <h5 className="font-extrabold text-xs text-slate-800 flex items-center gap-1.5">
+                          <Database className="w-4 h-4 text-emerald-500" />
+                          Integrasi Perhitungan Pengunjung Supabase Cloud
+                        </h5>
+                        <p className="text-[11px] text-slate-500 leading-relaxed">
+                          Aplikasi ini mendukung penghitungan jumlah pengunjung unik harian secara cloud yang tersambung langsung dengan proyek Supabase Anda.
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[10px] font-bold text-slate-500">Status Penghitung:</span>
+                        {supabaseConfigured ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Terkoneksi ke Cloud Supabase ({currentSupabaseUrl})
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+                            Menggunakan File Lokal (Supabase belum diisi di Secrets)
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="bg-slate-100 p-3 rounded-xl space-y-2 text-[11px] leading-relaxed border border-slate-200">
+                        <span className="block font-extrabold text-[9px] uppercase tracking-wider text-slate-600">Cara Aktivasi Sinkronisasi Supabase (kxeuazumpnmscwpephll):</span>
+                        <ol className="list-decimal list-inside space-y-1 text-slate-600">
+                          <li>Buka menu <strong>Secrets</strong> di pojok kanan bawah editor AI Studio.</li>
+                          <li>Masukkan secret berikut:
+                            <ul className="list-disc list-inside ml-4 mt-0.5 space-y-0.5 text-slate-500 font-mono text-[10px]">
+                              <li><code className="text-slate-800 font-bold">SUPABASE_URL</code>: <span className="bg-white px-1.5 py-0.5 rounded border border-slate-200">https://kxeuazumpnmscwpephll.supabase.co</span></li>
+                              <li><code className="text-slate-800 font-bold">SUPABASE_ANON_KEY</code>: <span className="text-slate-400 italic font-sans">(Isi dengan anon / public service key dari Supabase Anda)</span></li>
+                            </ul>
+                          </li>
+                          <li>Salin & jalankan skrip SQL berikut di menu <strong className="text-emerald-700 font-bold">SQL Editor (New Query)</strong> di dashboard Supabase Anda untuk mempersiapkan tabel otomatis:</li>
+                        </ol>
+
+                        <div className="relative mt-2">
+                          <pre className="p-2.5 bg-slate-950 text-emerald-400 rounded-lg overflow-x-auto font-mono text-[9px] leading-normal border border-slate-800 select-all max-h-32">
+{`-- SQL untuk membuat tabel log pengunjung (Pilihan Utama)
+create table public.visitor_logs (
+    id bigint generated by default as identity primary key,
+    created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+    ip_address text,
+    user_agent text,
+    page_path text default '/'
+);
+
+-- SQL untuk membuat tabel counter alternatif (Pilihan Cadangan)
+create table public.visitor_counts (
+    id text primary key,
+    total_count bigint default 0,
+    last_updated timestamp with time zone default timezone('utc'::text, now()) not null
+);`}
+                          </pre>
+                        </div>
+                        <p className="text-[10px] text-slate-400 italic mt-1 leading-normal">Setelah skrip tersebut dieksekusi di database, server SINGKAP akan langsung menyelaraskan data dengan Supabase Anda!</p>
+                      </div>
                     </div>
                   </div>
                 )}

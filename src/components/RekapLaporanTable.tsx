@@ -637,6 +637,21 @@ export default function RekapLaporanTable({
                 </div>
               </div>
 
+              {/* Image Preview if available */}
+              {selectedReport.imageUrl && (
+                <div className="space-y-1.5 text-left">
+                  <h5 className="text-[10px] text-slate-400 font-extrabold uppercase">Foto Bukti Fisik Lapangan (Google Drive / Online)</h5>
+                  <div className="border border-slate-150 rounded-2xl overflow-hidden bg-slate-950 aspect-video max-h-56 flex items-center justify-center shadow-xs">
+                    <img 
+                      src={selectedReport.imageUrl} 
+                      alt="Bukti Serangan OPT" 
+                      className="max-h-full max-w-full object-contain"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Symptom description */}
               <div className="space-y-1.5 text-left">
                 <h5 className="text-[10px] text-slate-400 font-extrabold uppercase">Deskripsi Gejala Lapangan</h5>
