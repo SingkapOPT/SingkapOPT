@@ -1480,14 +1480,14 @@ create table public.visitor_counts (
                         <div className="space-y-1 flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-1">
                             <span className="text-[9px] font-black uppercase tracking-wider text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">
-                              Kepala BPP
+                              Koordinator BPP
                             </span>
                             <span className="flex items-center gap-0.5 text-[8px] font-bold text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded animate-pulse">
                               <span className="w-1 h-1 rounded-full bg-emerald-500"></span> Siaga
                             </span>
                           </div>
-                          <h4 className="text-xs font-extrabold text-slate-800 truncate" title="Yoksi Z. Banamtuan, A.md">
-                            Yoksi Z. Banamtuan, A.md
+                          <h4 className="text-xs font-extrabold text-slate-800 truncate" title="Yoksi Z. Banamtuan, A.Md">
+                            Yoksi Z. Banamtuan, A.Md
                           </h4>
                           <p className="text-[10px] text-slate-500 font-mono flex items-center gap-1 font-semibold">
                             <Phone className="w-3 h-3 text-slate-400 shrink-0" />
@@ -1868,14 +1868,14 @@ create table public.visitor_counts (
                     <div className="space-y-1.5 flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-[10px] font-black uppercase tracking-wider text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-100">
-                          Kepala BPP
+                          Koordinator BPP
                         </span>
                         <span className="flex items-center gap-1 text-[9px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded animate-pulse">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Siaga Layanan
                         </span>
                       </div>
-                      <h3 className="text-base font-extrabold text-slate-800" title="Yoksi Z. Banamtuan, A.md">
-                        Yoksi Z. Banamtuan, A.md (Kepala BPP)
+                      <h3 className="text-base font-extrabold text-slate-800" title="Yoksi Z. Banamtuan, A.Md">
+                        Yoksi Z. Banamtuan, A.Md (Koordinator BPP)
                       </h3>
                       <p className="text-xs text-slate-500 leading-normal font-medium">
                         Bertanggung jawab atas koordinasi pengamatan, kebijakan mitigasi OPT tingkat kecamatan, dan perumusan stimulan bantuan tani.
@@ -1893,7 +1893,7 @@ create table public.visitor_counts (
                     className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold transition shadow-3xs hover:scale-[1.01] active:scale-95"
                   >
                     <MessageSquare className="w-4 h-4" />
-                    Hubungi Via WhatsApp (Kepala BPP)
+                    Hubungi Via WhatsApp (Koordinator BPP)
                   </a>
                 </div>
 

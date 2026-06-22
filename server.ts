@@ -52,7 +52,6 @@ function getTodayString() {
 async function syncVisitorWithSupabase(ip: string, userAgent: string, pagePath: string) {
   if (!supabase) return;
   try {
-    // Try to log in visitor_logs table or update visitor_counts
     const payload = {
       ip_address: ip,
       user_agent: userAgent,
@@ -60,20 +59,20 @@ async function syncVisitorWithSupabase(ip: string, userAgent: string, pagePath: 
       created_at: new Date().toISOString()
     };
     
-    // Try visitor_logs first
+    // 1. Log the visit to visitor_logs first
     const { error: err1 } = await supabase.from('visitor_logs').insert([payload]);
     if (err1) {
-      // If error (e.g. table not found), try 'visitors' table
-      const { error: err2 } = await supabase.from('visitors').insert([payload]);
-      if (err2) {
-        // Fallback to simple key-value structure
-        await supabase.from('visitor_counts').upsert({
-          id: 'main_counter',
-          total_count: visitorCount,
-          last_updated: payload.created_at
-        }, { onConflict: 'id' });
-      }
+      // Try secondary visitors table
+      await supabase.from('visitors').insert([payload]);
     }
+    
+    // 2. ALWAYS upsert / refresh the total_count inside visitor_counts with the current count!
+    await supabase.from('visitor_counts').upsert({
+      id: 'main_counter',
+      total_count: visitorCount,
+      last_updated: payload.created_at
+    }, { onConflict: 'id' });
+    
   } catch (err) {
     console.warn('[SINGKAP Supabase Async] Failed synchronizing to cloud database:', err);
   }
@@ -83,14 +82,33 @@ async function syncVisitorWithSupabase(ip: string, userAgent: string, pagePath: 
 async function getSupabaseVisitorCount(): Promise<{ total: number; daily: Record<string, number> } | null> {
   if (!supabase) return null;
   try {
-    // Attempt counting row records from visitor_logs
+    let total = 0;
+    let daily: Record<string, number> = {};
+    let hasCountData = false;
+
+    // A. ALWAYS check 'visitor_counts' table first!
+    // This enables manual settings from Supabase dashboard to take priority.
+    const { data: counterRow, error: errCounter } = await supabase
+      .from('visitor_counts')
+      .select('total_count')
+      .eq('id', 'main_counter')
+      .maybeSingle();
+
+    if (!errCounter && counterRow) {
+      total = counterRow.total_count || 0;
+      hasCountData = true;
+      console.log('[SINGKAP Supabase Connect] Read master count from visitor_counts:', total);
+    }
+
+    // B. Build the daily breakdowns from individual visitor_logs
     const { count: countLogs, error: errLogs } = await supabase
       .from('visitor_logs')
       .select('*', { count: 'exact', head: true });
-      
+
+    let logsCount = 0;
     if (!errLogs && typeof countLogs === 'number') {
+      logsCount = countLogs;
       const { data: listRows } = await supabase.from('visitor_logs').select('created_at').limit(1000);
-      const daily: Record<string, number> = {};
       if (listRows) {
         listRows.forEach((row: any) => {
           if (row.created_at) {
@@ -99,41 +117,35 @@ async function getSupabaseVisitorCount(): Promise<{ total: number; daily: Record
           }
         });
       }
-      return { total: countLogs, daily };
-    }
-    
-    // Try visitors table
-    const { count: countVisitors, error: errVisitors } = await supabase
-      .from('visitors')
-      .select('*', { count: 'exact', head: true });
-      
-    if (!errVisitors && typeof countVisitors === 'number') {
-      const { data: listRows } = await supabase.from('visitors').select('created_at').limit(1000);
-      const daily: Record<string, number> = {};
-      if (listRows) {
-        listRows.forEach((row: any) => {
-          if (row.created_at) {
-            const dayKey = row.created_at.split('T')[0];
-            daily[dayKey] = (daily[dayKey] || 0) + 1;
-          }
-        });
+    } else {
+      // Try fallback "visitors" table
+      const { count: countVisitors, error: errVisitors } = await supabase
+        .from('visitors')
+        .select('*', { count: 'exact', head: true });
+      if (!errVisitors && typeof countVisitors === 'number') {
+        logsCount = countVisitors;
+        const { data: listRows } = await supabase.from('visitors').select('created_at').limit(1000);
+        if (listRows) {
+          listRows.forEach((row: any) => {
+            if (row.created_at) {
+              const dayKey = row.created_at.split('T')[0];
+              daily[dayKey] = (daily[dayKey] || 0) + 1;
+            }
+          });
+        }
       }
-      return { total: countVisitors, daily };
     }
-    
-    // Try counter table
-    const { data: counterRow, error: errCounter } = await supabase
-      .from('visitor_counts')
-      .select('*')
-      .eq('id', 'main_counter')
-      .single();
-      
-    if (!errCounter && counterRow) {
-      return {
-        total: counterRow.total_count || 0,
-        daily: {}
-      };
+
+    // C. Combine results
+    if (hasCountData) {
+      // If we found a master count in visitor_counts, prioritize it.
+      // But verify if logs have grown beyond it to prevent going backwards.
+      total = Math.max(total, logsCount);
+    } else {
+      total = logsCount;
     }
+
+    return { total, daily };
   } catch (err) {
     console.error('[SINGKAP Supabase Count] Error polling counts from container:', err);
   }
@@ -165,13 +177,31 @@ async function initializeVisitorSystem() {
     const remote = await getSupabaseVisitorCount();
     if (remote) {
       if (remote.total > visitorCount) {
+        // Supabase has a larger record (or has been directly set by database admins). This is our new source of truth!
         visitorCount = remote.total;
+        console.log('[SINGKAP Server] Syncing to HIGHER Supabase count:', visitorCount);
+      } else if (visitorCount > remote.total) {
+        // Our local server contains a larger count (e.g., initial 1294 seed).
+        // Let's seed / upload our higher local count into Supabase so they match perfectly!
+        console.log('[SINGKAP Server] Local count is higher. Seeding Supabase with local value:', visitorCount);
+        try {
+          await supabase.from('visitor_counts').upsert({
+            id: 'main_counter',
+            total_count: visitorCount,
+            last_updated: new Date().toISOString()
+          }, { onConflict: 'id' });
+        } catch (sErr) {
+          console.warn('[SINGKAP Server] Failed to seed local count to Supabase on startup:', sErr);
+        }
       }
+      
+      // Merge daily calendars
       Object.entries(remote.daily).forEach(([date, num]) => {
         if (!dailyVisitors[date] || dailyVisitors[date] < num) {
           dailyVisitors[date] = num;
         }
       });
+      
       // Save local backup cache
       try {
         fs.writeFileSync(visitorFilePath, JSON.stringify({ total: visitorCount, count: visitorCount, daily: dailyVisitors }, null, 2), 'utf8');
